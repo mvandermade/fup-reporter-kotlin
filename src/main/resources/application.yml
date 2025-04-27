@@ -1,0 +1,33 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: /db/changelog/db.changelog-master.xml
+  modulith:
+    events:
+      republish-outstanding-events-on-restart: true
+      completion-mode: UPDATE # DELETE or ARCHIVE also option
+---
+spring:
+  config:
+    activate:
+      on-profile: development
+  datasource:
+    hikari:
+      username: postgres
+      password: password
+    url: jdbc:postgresql://localhost:5432/postzegel-reporter
+---
+spring:
+  config:
+    activate:
+      on-profile: staging, production
+  datasource:
+    hikari:
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+    url: ${DB_JDBC_URL}
