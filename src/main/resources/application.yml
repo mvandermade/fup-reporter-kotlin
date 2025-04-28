@@ -9,8 +9,8 @@ spring:
     change-log: /db/changelog/db.changelog-master.xml
   modulith:
     events:
-      republish-outstanding-events-on-restart: true
-      completion-mode: UPDATE # DELETE or ARCHIVE also option
+      republish-outstanding-events-on-restart: false # Only useful for single instance applications
+      completion-mode: DELETE # DELETE or ARCHIVE also option
 ---
 spring:
   config:

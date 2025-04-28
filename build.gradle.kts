@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+    implementation("org.springframework.modulith:spring-modulith-events-api")
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")

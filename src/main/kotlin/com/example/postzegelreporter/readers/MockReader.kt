@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @Service
 class MockReader(
@@ -15,11 +16,13 @@ class MockReader(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(fixedDelay = 1_000)
     @Transactional
     fun scanPostZegel() {
-        // Just a simple scanner
-        val input = randomProvider.randomString(1)
+        // Just a simple postzegel scanner mock
+//        val input = randomProvider.randomString(1)
+        // Put in the date to show the ordering issue...
+        val input = Instant.now().toString()
         logger.info("Read $input")
 
         // Push an event using Spring Modulith
