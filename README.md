@@ -20,7 +20,7 @@ Use to externalize events: https://docs.spring.io/spring-modulith/docs/current-S
 
 ### Topic structure
 Modulith automatically creates a topic for the package and @Externalized annotated data class.
-Example (jump into the container): `docker exec -it kafka_container bas`
+Example (jump into the container): `docker exec -it kafka_container bash`
 ```
 /opt/kafka/bin$ ./kafka-topics.sh --list --bootstrap-server localhost:9092
 ```
