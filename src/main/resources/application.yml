@@ -20,7 +20,7 @@ spring:
     hikari:
       username: postgres
       password: password
-    url: jdbc:postgresql://localhost:5432/postzegel-reporter
+    url: jdbc:postgresql://localhost:5432/postzegel_reporter
 ---
 spring:
   config:

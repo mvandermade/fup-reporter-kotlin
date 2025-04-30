@@ -32,6 +32,8 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     implementation("org.springframework.modulith:spring-modulith-events-api")
+    implementation("org.springframework.modulith:spring-modulith-events-kafka")
+
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")

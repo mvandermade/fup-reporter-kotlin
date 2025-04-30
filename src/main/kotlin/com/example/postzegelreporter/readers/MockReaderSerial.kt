@@ -2,16 +2,17 @@ package com.example.postzegelreporter.readers
 
 import com.example.postzegelreporter.domain.PostzegelCode
 import com.example.postzegelreporter.providers.RandomProvider
+import com.example.postzegelreporter.providers.TimeProvider
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Instant
 
 @Service
-class MockReader(
+class MockReaderSerial(
     private val randomProvider: RandomProvider,
+    private val timeProvider: TimeProvider,
     private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -19,15 +20,12 @@ class MockReader(
     @Scheduled(fixedDelay = 1_000)
     @Transactional
     fun scanPostZegel() {
-        // Just a simple postzegel scanner mock
-//        val input = randomProvider.randomString(1)
-        // Put in the date to show the ordering issue...
-        val input = Instant.now().toString()
-        logger.info("Read $input")
-
+        val input = randomProvider.randomString(1)
+        val instant = timeProvider.instantNow()
+        logger.info("Read Serial Event: $input @ $instant")
         // Push an event using Spring Modulith
         applicationEventPublisher.publishEvent(
-            PostzegelCode(code = input),
+            PostzegelCode(readAt = instant, code = input),
         )
     }
 }
