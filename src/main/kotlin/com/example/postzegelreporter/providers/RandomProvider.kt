@@ -1,6 +1,7 @@
 package com.example.postzegelreporter.providers
 
 import org.springframework.stereotype.Component
+import java.util.UUID
 
 @Component
 class RandomProvider {
@@ -14,5 +15,9 @@ class RandomProvider {
                 .joinToString("")
 
         return randomString
+    }
+
+    fun randomUUID(): UUID {
+        return UUID.randomUUID()
     }
 }

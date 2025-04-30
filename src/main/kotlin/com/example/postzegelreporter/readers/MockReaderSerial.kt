@@ -1,6 +1,6 @@
 package com.example.postzegelreporter.readers
 
-import com.example.postzegelreporter.domain.PostzegelCode
+import com.example.postzegelreporter.domain.events.PostzegelCodeDTO
 import com.example.postzegelreporter.providers.RandomProvider
 import com.example.postzegelreporter.providers.TimeProvider
 import org.slf4j.LoggerFactory
@@ -25,7 +25,11 @@ class MockReaderSerial(
         logger.info("Read Serial Event: $input @ $instant")
         // Push an event using Spring Modulith
         applicationEventPublisher.publishEvent(
-            PostzegelCode(readAt = instant, code = input),
+            PostzegelCodeDTO(
+                readAt = instant,
+                code = input,
+                idempotencyKey = randomProvider.randomUUID().toString(),
+            ),
         )
     }
 }

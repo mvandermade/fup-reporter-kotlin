@@ -11,6 +11,11 @@ spring:
     events:
       republish-outstanding-events-on-restart: false # Only useful for single instance applications
       completion-mode: DELETE # DELETE or ARCHIVE also option
+application:
+  apicallers:
+    postzegelserver:
+      url: localhost:8080
+
 ---
 spring:
   config:

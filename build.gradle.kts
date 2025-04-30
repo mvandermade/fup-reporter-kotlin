@@ -25,7 +25,6 @@ val springModulithVersion by extra("1.3.5")
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
@@ -33,6 +32,7 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     implementation("org.springframework.modulith:spring-modulith-events-api")
     implementation("org.springframework.modulith:spring-modulith-events-kafka")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     runtimeOnly("org.postgresql:postgresql")
