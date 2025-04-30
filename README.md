@@ -6,11 +6,8 @@ A reporter client for communication with the backend
 - Start mutliple instances of the modulith
 
 # Local setup
-You are going to need a Postgres database.
-Get one using for example docker
-```shell
-docker run -p 5432:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=postzegel-reporter --volume pgdata:/var/lib/postgresql/data -d postgres:17
-```
+- Use docker to start postgres and kafka. Postgres is persistent using a volume, Kafka can be configured to be. See docker-compose.yml
+- `docker compose up`
 
 # Notes
 - Watch out when refactoring the name of a listener. This means upon restarting the application the events are not resumed!
