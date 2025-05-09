@@ -25,5 +25,6 @@ spring:
 application:
   apicallers:
     postzegelserver:
-      url: localhost:8080
-
+      url: localhost:8881
+server:
+  port: 8882

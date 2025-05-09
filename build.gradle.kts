@@ -34,6 +34,8 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.apache.kafka:kafka-streams")
 
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
     testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")

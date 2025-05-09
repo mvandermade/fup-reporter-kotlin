@@ -32,7 +32,11 @@ class ServerApiCaller(
         }
     private var isShuttingDown = false
 
-    @KafkaListener(id = "serverApiCaller", topics = [TOPIC_SERIAL_POSTZEGEL])
+    @KafkaListener(
+        id = "serverApiCaller",
+        topics = [TOPIC_SERIAL_POSTZEGEL],
+//        containerFactory = "kafkaListenerContainerFactoryDeadLetter"
+    )
     fun receive(
         @Payload message: String,
         @Header(name = KafkaHeaders.RECEIVED_KEY, required = false) key: String?,
@@ -41,6 +45,7 @@ class ServerApiCaller(
         @Header(KafkaHeaders.RECEIVED_TIMESTAMP) ts: Long,
         @Header(KafkaHeaders.GROUP_ID) groupId: String,
     ) {
+        throw Exception("Test DLT")
         val postzegelCodeDTO = objectMapper.readValue(message, PostzegelCodeDTO::class.java)
 
         logger.info("Api calling: ${postzegelCodeDTO.code} ${logDetails(key, partition, topic, ts, groupId)}")

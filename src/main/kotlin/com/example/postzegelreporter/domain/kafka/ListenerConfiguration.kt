@@ -20,12 +20,23 @@ import org.springframework.util.backoff.FixedBackOff
 @EnableKafka
 class ListenerConfiguration {
     @Bean
-    fun kafkaListenerContainerFactory(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
+    fun kafkaListenerContainerFactoryDeadLetter(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
         val factory =
             ConcurrentKafkaListenerContainerFactory<String, String>()
         factory.consumerFactory = consumerFactory()
         factory.setConcurrency(3)
         factory.containerProperties.pollTimeout = 3000
+        return factory
+    }
+
+    @Bean
+    fun kafkaListenerContainerFactoryNoDeadLetter(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
+        val factory =
+            ConcurrentKafkaListenerContainerFactory<String, String>()
+        factory.consumerFactory = consumerFactory()
+        factory.setConcurrency(3)
+        factory.containerProperties.pollTimeout = 3000
+        factory.setCommonErrorHandler(DefaultErrorHandler())
         return factory
     }
 
@@ -44,7 +55,7 @@ class ListenerConfiguration {
     }
 
     @Bean
-    fun errorHandler(template: KafkaOperations<Any?, Any?>): CommonErrorHandler {
+    fun deadLetterErrorHandler(template: KafkaOperations<Any?, Any?>): CommonErrorHandler {
         return DefaultErrorHandler(
             DeadLetterPublishingRecoverer(template),
             FixedBackOff(1000L, 2),
