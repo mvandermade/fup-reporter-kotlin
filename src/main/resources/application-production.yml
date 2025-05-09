@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: staging, production
+  datasource:
+    hikari:
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+    url: ${DB_JDBC_URL}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: /db/changelog/db.changelog-master.xml
+application:
+  apicallers:
+    postzegelserver:
+      url: localhost:8080

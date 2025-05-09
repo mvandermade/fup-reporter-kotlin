@@ -1,7 +1,7 @@
 package com.example.postzegelreporter.domain.mappers
 
 import com.example.postzegelreporter.domain.PostzegelCodeRequest
-import com.example.postzegelreporter.domain.events.PostzegelCodeDTO
+import com.example.postzegelreporter.domain.messages.PostzegelCodeDTO
 import org.springframework.stereotype.Component
 
 @Component

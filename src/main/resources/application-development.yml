@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: development
+  datasource:
+    hikari:
+      username: postgres
+      password: password
+    url: jdbc:postgresql://localhost:5432/postzegel_reporter
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      client-id: made-funicular-postzegel-reporter-kotlin
+      retries: 3
+  liquibase:
+    enabled: true
+    change-log: /db/changelog/db.changelog-master.xml
+application:
+  apicallers:
+    postzegelserver:
+      url: localhost:8080
+

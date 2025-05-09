@@ -1,11 +1,10 @@
-package com.example.postzegelreporter.domain.events
+package com.example.postzegelreporter.domain.messages
 
-import org.springframework.modulith.events.Externalized
 import java.time.Instant
 
-@Externalized
 data class PostzegelCodeDTO(
     val readAt: Instant,
     val code: String,
     val idempotencyKey: String,
-)
+    override val kafkaKey: String,
+) : KafkaMessage
