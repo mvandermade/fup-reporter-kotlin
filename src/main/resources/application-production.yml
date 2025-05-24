@@ -16,6 +16,6 @@ spring:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
 application:
-  apicallers:
-    postzegelserver:
+  api-callers:
+    stamp-server:
       url: localhost:8080

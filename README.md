@@ -1,4 +1,4 @@
-# made-funicular-postzegel-reporter-kotlin
+# made-funicular-stamp-reporter-kotlin
 A reporter client for communication with the backend
 
 # To find out
@@ -21,8 +21,8 @@ Example (jump into the container): `docker exec -it kafka_container bash`
 /opt/kafka/bin$ ./kafka-topics.sh --list --bootstrap-server localhost:9092
 ```
 ```
-./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial.postzegel-dlt
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial.stamp-dlt
 ```
 
 ### Dead letter topic
-./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial-postzegel-dlt --property print.headers=true
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial-stamp-dlt --property print.headers=true
