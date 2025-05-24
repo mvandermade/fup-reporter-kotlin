@@ -1,8 +1,8 @@
 package com.example.postzegelreporter.domain
 
-import java.time.Instant
+import java.time.ZonedDateTime
 
 data class PostzegelCodeRequest(
-    val readAt: Instant,
+    val readAt: ZonedDateTime,
     val code: String,
 )

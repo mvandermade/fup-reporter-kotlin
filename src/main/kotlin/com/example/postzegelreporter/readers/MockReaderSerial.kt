@@ -20,18 +20,18 @@ class MockReaderSerial(
     @Scheduled(fixedDelay = 10_000)
     fun scanPostZegel() {
         val input = randomProvider.randomString(1)
-        val instant = timeProvider.instantNow()
-        logger.info("Read Serial Event: $input @ $instant")
+        val zdt = timeProvider.zonedDateTimeNowSystem()
+        logger.info("Read Serial Event: $input @ $zdt")
         // Push an event using Spring Modulith
         kafkaSender.sendMessage(
             TOPIC_SERIAL_POSTZEGEL,
             PostzegelCodeDTO(
-                readAt = instant,
+                readAt = zdt,
                 code = input,
                 idempotencyKey = randomProvider.randomUUID().toString(),
-                kafkaKey = randomProvider.randomUUID().toString(),
+                kafkaKey = input.getOrNull(0).toString(),
             ),
         )
-        logger.info("Sent to kafka Serial Event: $input @ $instant")
+        logger.info("Sent to kafka Serial Event: $input @ $zdt")
     }
 }

@@ -1,7 +1,9 @@
 package com.example.postzegelreporter.domain.kafka
 
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
@@ -9,7 +11,9 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.config.KafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.core.KafkaOperations
+import org.springframework.kafka.core.DefaultKafkaProducerFactory
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.listener.CommonErrorHandler
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
@@ -18,25 +22,14 @@ import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
 @EnableKafka
-class ListenerConfiguration {
+class ListenerConfiguration(
+    private val template: KafkaTemplate<String, String>,
+) {
     @Bean
-    fun kafkaListenerContainerFactoryDeadLetter(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
-        val factory =
-            ConcurrentKafkaListenerContainerFactory<String, String>()
+    fun appKafkaListenerContainerFactory(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
         factory.consumerFactory = consumerFactory()
         factory.setConcurrency(3)
-        factory.containerProperties.pollTimeout = 3000
-        return factory
-    }
-
-    @Bean
-    fun kafkaListenerContainerFactoryNoDeadLetter(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
-        val factory =
-            ConcurrentKafkaListenerContainerFactory<String, String>()
-        factory.consumerFactory = consumerFactory()
-        factory.setConcurrency(3)
-        factory.containerProperties.pollTimeout = 3000
-        factory.setCommonErrorHandler(DefaultErrorHandler())
         return factory
     }
 
@@ -54,10 +47,20 @@ class ListenerConfiguration {
         return props
     }
 
+    fun producerFactory(): ProducerFactory<String, String> {
+        val props = mutableMapOf<String, Any>()
+        props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        return DefaultKafkaProducerFactory(props)
+    }
+
     @Bean
-    fun deadLetterErrorHandler(template: KafkaOperations<Any?, Any?>): CommonErrorHandler {
+    fun deadLetterErrorHandler(): CommonErrorHandler {
         return DefaultErrorHandler(
-            DeadLetterPublishingRecoverer(template),
+            DeadLetterPublishingRecoverer(
+                KafkaTemplate(producerFactory()),
+            ),
             FixedBackOff(1000L, 2),
         )
     }

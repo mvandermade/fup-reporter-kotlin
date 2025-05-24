@@ -1,9 +1,10 @@
 package com.example.postzegelreporter.providers
 
 import org.springframework.stereotype.Component
-import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @Component
 class TimeProvider {
-    fun instantNow() = Instant.now()
+    fun zonedDateTimeNowSystem() = ZonedDateTime.now(ZoneOffset.systemDefault())
 }

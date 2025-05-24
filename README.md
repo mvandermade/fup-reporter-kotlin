@@ -23,3 +23,6 @@ Example (jump into the container): `docker exec -it kafka_container bash`
 ```
 ./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial.postzegel-dlt
 ```
+
+### Dead letter topic
+./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial-postzegel-dlt --property print.headers=true

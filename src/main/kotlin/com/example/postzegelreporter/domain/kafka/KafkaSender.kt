@@ -2,6 +2,7 @@ package com.example.postzegelreporter.domain.kafka
 
 import com.example.postzegelreporter.domain.messages.KafkaMessage
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
@@ -16,6 +17,7 @@ class KafkaSender(
     private val objectMapper =
         with(jacksonObjectMapper()) {
             this.registerModule(JavaTimeModule())
+            this.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             this.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         }
 
