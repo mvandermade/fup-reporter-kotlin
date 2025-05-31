@@ -16,6 +16,8 @@ spring:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
   kafka:
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
