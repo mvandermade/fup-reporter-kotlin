@@ -26,5 +26,9 @@ application:
   api-callers:
     stamp-server:
       url: http://localhost:8881
+  kafka:
+    deadletter-producer:
+      bootstrap-servers: localhost:9092
+    consumer: localhost:9092
 server:
   port: 8882

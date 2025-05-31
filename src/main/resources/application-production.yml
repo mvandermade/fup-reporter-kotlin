@@ -23,6 +23,11 @@ spring:
       client-id: ${KAFKA_CLIENT_ID}
       retries: 3
 application:
+  kafka:
+    deadletter-producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
   api-callers:
     stamp-server:
       url: ${STAMP_SERVER_URL}

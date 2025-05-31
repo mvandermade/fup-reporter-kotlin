@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
@@ -23,7 +24,10 @@ import org.springframework.util.backoff.FixedBackOff
 @Configuration
 @EnableKafka
 class ListenerConfiguration(
-    private val template: KafkaTemplate<String, String>,
+    @Value("\${application.kafka.deadletter-producer.bootstrap-servers}")
+    private val deadletterProducerBootstrapServers: String,
+    @Value("\${application.kafka.consumer.bootstrap-servers}")
+    private val consumerBootstrapServers: String,
 ) {
     @Bean
     fun appKafkaListenerContainerFactory(): KafkaListenerContainerFactory<ConcurrentMessageListenerContainer<String, String>> {
@@ -41,7 +45,7 @@ class ListenerConfiguration(
     @Bean
     fun consumerConfigs(): Map<String, Any> {
         val props = mutableMapOf<String, Any>()
-        props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        props[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = consumerBootstrapServers
         props[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
         props[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
         return props
@@ -49,7 +53,7 @@ class ListenerConfiguration(
 
     fun producerFactory(): ProducerFactory<String, String> {
         val props = mutableMapOf<String, Any>()
-        props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        props[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = deadletterProducerBootstrapServers
         props[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         props[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         return DefaultKafkaProducerFactory(props)
