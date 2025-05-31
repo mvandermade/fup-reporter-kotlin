@@ -29,6 +29,7 @@ application:
   kafka:
     deadletter-producer:
       bootstrap-servers: localhost:9092
-    consumer: localhost:9092
+    consumer:
+      bootstrap-servers: localhost:9092
 server:
   port: 8882
