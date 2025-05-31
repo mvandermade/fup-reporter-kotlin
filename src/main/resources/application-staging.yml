@@ -15,7 +15,14 @@ spring:
   liquibase:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
+  kafka:
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      client-id: ${KAFKA_CLIENT_ID}
+      retries: 3
 application:
   api-callers:
     stamp-server:
-      url: localhost:8080
+      url: ${STAMP_SERVER_URL}
