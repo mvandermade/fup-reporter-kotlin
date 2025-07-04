@@ -28,7 +28,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-    implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     implementation("org.springframework.kafka:spring-kafka")
@@ -36,11 +35,13 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
-    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.testcontainers:junit-jupiter:1.21.2")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:postgresql:1.21.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
