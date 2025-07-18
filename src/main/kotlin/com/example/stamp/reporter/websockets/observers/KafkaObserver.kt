@@ -13,7 +13,9 @@ import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.stereotype.Service
 
 @Service
-class KafkaObserver(private val trackerWebsocketHandler: TrackerWebsocketHandler) {
+class KafkaObserver(
+    private val trackerWebsocketHandler: TrackerWebsocketHandler,
+) {
     private val objectMapper =
         with(jacksonObjectMapper()) {
             this.registerModule(JavaTimeModule())

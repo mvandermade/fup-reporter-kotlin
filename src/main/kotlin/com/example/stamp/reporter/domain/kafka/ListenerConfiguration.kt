@@ -38,9 +38,7 @@ class ListenerConfiguration(
     }
 
     @Bean
-    fun consumerFactory(): ConsumerFactory<String, String> {
-        return DefaultKafkaConsumerFactory(consumerConfigs())
-    }
+    fun consumerFactory(): ConsumerFactory<String, String> = DefaultKafkaConsumerFactory(consumerConfigs())
 
     @Bean
     fun consumerConfigs(): Map<String, Any> {
@@ -60,12 +58,11 @@ class ListenerConfiguration(
     }
 
     @Bean
-    fun deadLetterErrorHandler(): CommonErrorHandler {
-        return DefaultErrorHandler(
+    fun deadLetterErrorHandler(): CommonErrorHandler =
+        DefaultErrorHandler(
             DeadLetterPublishingRecoverer(
                 KafkaTemplate(producerFactory()),
             ),
             FixedBackOff(1000L, 2),
         )
-    }
 }

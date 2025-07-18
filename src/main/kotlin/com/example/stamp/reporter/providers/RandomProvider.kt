@@ -17,7 +17,5 @@ class RandomProvider {
         return randomString
     }
 
-    fun randomUUID(): UUID {
-        return UUID.randomUUID()
-    }
+    fun randomUUID(): UUID = UUID.randomUUID()
 }
