@@ -7,6 +7,11 @@ spring:
       username: postgres
       password: password
     url: jdbc:postgresql://localhost:5432/stamp_reporter
+  grpc:
+    client:
+      channels:
+        io-balancer:
+          address: 0.0.0.0:7331
   jpa:
     hibernate:
       ddl-auto: validate
