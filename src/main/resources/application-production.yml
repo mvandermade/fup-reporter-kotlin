@@ -16,7 +16,7 @@ spring:
     client:
       channels:
         io-balancer:
-          address: 0.0.0.0:7331
+          address: ${IO_BALANCER_ADDRESS}
   liquibase:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml

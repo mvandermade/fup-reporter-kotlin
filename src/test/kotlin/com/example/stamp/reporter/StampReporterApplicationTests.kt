@@ -28,7 +28,6 @@ class StampReporterApplicationTests {
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {
-            println("invoking ${kafkaContainer.bootstrapServers}")
             registry.add("spring.kafka.bootstrap-servers", { kafkaContainer.bootstrapServers })
             registry.add("spring.kafka.producer.bootstrap-servers", Supplier { kafkaContainer.bootstrapServers })
             registry.add("application.kafka.deadletter-producer.bootstrap-servers", Supplier { kafkaContainer.bootstrapServers })
