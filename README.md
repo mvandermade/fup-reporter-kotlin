@@ -4,6 +4,8 @@ A reporter client for communication with the backend
 # Local setup
 - Use docker to start postgres and kafka. Postgres is persistent using a volume, Kafka can be configured to be. See docker-compose.yml
 - `docker compose up`
+- Gradle build to generate stubs for gRPC
+
 
 # Kafka
 ### Topic structure

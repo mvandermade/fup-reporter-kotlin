@@ -1,3 +1,5 @@
+import com.google.protobuf.gradle.id
+
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.spring") version "2.2.0"
@@ -6,6 +8,7 @@ plugins {
     kotlin("plugin.jpa") version "2.2.0"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("com.github.ben-manes.versions") version "0.52.0"
+    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.example"
@@ -23,6 +26,7 @@ repositories {
 
 // Openfeign
 extra["springCloudVersion"] = "2025.0.0"
+extra["springGrpcVersion"] = "0.9.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -39,6 +43,9 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.liquibase:liquibase-core")
 
+    implementation("io.grpc:grpc-services")
+    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -46,11 +53,13 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
     testImplementation("org.testcontainers:kafka:1.21.3")
     testImplementation("org.testcontainers:postgresql:1.21.3")
+    testImplementation("org.springframework.grpc:spring-grpc-test")
 }
 
 dependencyManagement {
     imports {
         mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
+        mavenBom("org.springframework.grpc:spring-grpc-dependencies:${property("springGrpcVersion")}")
     }
 }
 
@@ -64,6 +73,26 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc"
+    }
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java"
+        }
+    }
+    generateProtoTasks {
+        all().forEach {
+            it.plugins {
+                id("grpc") {
+                    option("@generated=omit")
+                }
+            }
+        }
+    }
 }
 
 tasks.withType<Test> {
