@@ -20,7 +20,7 @@ class IOBalancerReader(
     private val ioBalancerStub: BalancerSvcGrpc.BalancerSvcBlockingV2Stub,
     private val timeProvider: TimeProvider,
     private val kafkaSender: KafkaSender,
-    private val trackerWebsocketHandler: TrackerWebsocketHandler
+    private val trackerWebsocketHandler: TrackerWebsocketHandler,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -41,19 +41,20 @@ class IOBalancerReader(
             val zdt = timeProvider.zonedDateTimeNowSystem()
             logger.info("Read IO balanced Event: ${assignment.postzegelCode} @ $zdt")
 
-            val stampCodeDTO = StampCodeDTO(
-                readAt = zdt,
-                code = assignment.postzegelCode,
-                idempotencyKey = assignment.idempotencyId.toString(),
-                kafkaKey = assignment.postzegelCode,
-            )
+            val stampCodeDTO =
+                StampCodeDTO(
+                    readAt = zdt,
+                    code = assignment.postzegelCode,
+                    idempotencyKey = assignment.idempotencyId.toString(),
+                    kafkaKey = assignment.postzegelCode,
+                )
 
             logger.info("Read Serial Event: $stampCodeDTO")
             trackerWebsocketHandler.sendAll(WebSocketSerialEventMessage(code = stampCodeDTO.code))
 
             kafkaSender.sendMessage(
                 TOPIC_SERIAL_STAMP,
-                stampCodeDTO
+                stampCodeDTO,
             )
             logger.info("Sent to kafka io balanced event: ${assignment.postzegelCode} @ $zdt")
 

@@ -33,7 +33,7 @@ class ServerApiCaller(
     @KafkaListener(
         id = "serverApiCaller",
         topics = [TOPIC_SERIAL_STAMP],
-        concurrency = "2"
+        concurrency = "2",
     )
     fun receive(
         @Payload message: String,
