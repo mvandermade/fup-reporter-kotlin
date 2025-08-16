@@ -1,7 +1,7 @@
 package com.example.stamp.reporter.websockets.domain
 
-import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator
+import org.springframework.web.socket.WebSocketSession
 
 data class WebSocketClient(
-    val session: ConcurrentWebSocketSessionDecorator,
+    val session: WebSocketSession,
 )

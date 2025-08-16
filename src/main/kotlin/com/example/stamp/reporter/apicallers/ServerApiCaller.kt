@@ -33,6 +33,7 @@ class ServerApiCaller(
     @KafkaListener(
         id = "serverApiCaller",
         topics = [TOPIC_SERIAL_STAMP],
+        concurrency = "2"
     )
     fun receive(
         @Payload message: String,
@@ -47,14 +48,13 @@ class ServerApiCaller(
         logger.info("Api calling: ${stampCodeDTO.code} ${logDetails(key, partition, topic, ts, groupId)}")
 
         trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(stampCodeDTO.code))
-        Thread.sleep(150)
+        Thread.sleep(500)
 
         stampServerApi.postStampCode(
             stampCodeMapper.toRequest(stampCodeDTO),
             stampCodeDTO.idempotencyKey,
         )
 
-        Thread.sleep(150)
         trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(stampCodeDTO.code))
 
         logger.info("Api call OK: ${stampCodeDTO.code} ${logDetails(key, partition, topic, ts, groupId)}")
