@@ -20,13 +20,13 @@ data class WebSocketSerialEventMessage(
 
 data class WebSocketPostExchangeMessage(
     val code: String,
-): WebSocketClientMessage {
+) : WebSocketClientMessage {
     override val type: WebsocketEventType = WebsocketEventType.POST_EXCHANGE
 }
 
 data class WebSocketAckExchangeMessage(
     val code: String,
-): WebSocketClientMessage {
+) : WebSocketClientMessage {
     override val type: WebsocketEventType = WebsocketEventType.ACK_EXCHANGE
 }
 
