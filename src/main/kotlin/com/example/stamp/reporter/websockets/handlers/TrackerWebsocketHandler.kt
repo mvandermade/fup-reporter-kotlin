@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -26,7 +27,8 @@ class TrackerWebsocketHandler : TextWebSocketHandler() {
     private val objectMapper = jacksonObjectMapper()
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
-        webSockerClientList += WebSocketClient(session = session)
+        val concurrentSession = ConcurrentWebSocketSessionDecorator(session, 2000, 4096)
+        webSockerClientList += WebSocketClient(session = concurrentSession)
     }
 
     private fun sendEvent(

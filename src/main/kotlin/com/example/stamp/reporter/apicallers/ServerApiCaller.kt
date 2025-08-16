@@ -4,6 +4,9 @@ import com.example.stamp.reporter.apicallers.feign.StampServerApi
 import com.example.stamp.reporter.domain.kafka.TOPIC_SERIAL_STAMP
 import com.example.stamp.reporter.domain.mappers.StampCodeMapper
 import com.example.stamp.reporter.domain.messages.StampCodeDTO
+import com.example.stamp.reporter.websockets.domain.WebSocketAckExchangeMessage
+import com.example.stamp.reporter.websockets.domain.WebSocketPostExchangeMessage
+import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service
 class ServerApiCaller(
     private val stampServerApi: StampServerApi,
     private val stampCodeMapper: StampCodeMapper,
+    private val trackerWebsocketHandler: TrackerWebsocketHandler,
 ) {
     private val logger = LoggerFactory.getLogger(this.javaClass)
     private val objectMapper =
@@ -42,10 +46,17 @@ class ServerApiCaller(
 
         logger.info("Api calling: ${stampCodeDTO.code} ${logDetails(key, partition, topic, ts, groupId)}")
 
+        trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(stampCodeDTO.code))
+        Thread.sleep(150)
+
         stampServerApi.postStampCode(
             stampCodeMapper.toRequest(stampCodeDTO),
             stampCodeDTO.idempotencyKey,
         )
+
+        Thread.sleep(150)
+        trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(stampCodeDTO.code))
+
         logger.info("Api call OK: ${stampCodeDTO.code} ${logDetails(key, partition, topic, ts, groupId)}")
     }
 
