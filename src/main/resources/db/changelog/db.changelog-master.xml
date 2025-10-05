@@ -10,6 +10,6 @@
         </or>
     </preConditions>
     <!--  include separately to preserve ordering  -->
-<!--    <include relativeToChangelogFile="true" file="changesets/1-modulith-jdbc-events.xml"/>-->
+    <include relativeToChangelogFile="true" file="changesets/001-workflow-workflowstep.xml"/>
 
 </databaseChangeLog>

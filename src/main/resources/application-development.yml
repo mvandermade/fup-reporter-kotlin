@@ -30,7 +30,12 @@ spring:
 application:
   api-callers:
     stamp-server:
-      url: http://localhost:8881
+      url: http://localhost:31313
+  grpc:
+    client:
+      channels:
+        io-balancer:
+          enabled: false
   kafka:
     deadletter-producer:
       bootstrap-servers: localhost:9092

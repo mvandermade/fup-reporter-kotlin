@@ -9,6 +9,7 @@ import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.websockets.domain.WebSocketSerialEventMessage
 import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
@@ -21,6 +22,7 @@ class IOBalancerReader(
     private val timeProvider: TimeProvider,
     private val kafkaSender: KafkaSender,
     private val trackerWebsocketHandler: TrackerWebsocketHandler,
+    @param:Value("\${application.grpc.client.channels.io-balancer.enabled}") private val enabled: Boolean,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -32,8 +34,9 @@ class IOBalancerReader(
         isShuttingDown.set(true)
     }
 
-    @Scheduled(fixedDelay = 500L)
+    @Scheduled(fixedDelay = 5000L)
     fun listenToBalancer() {
+        if (!enabled) return
         val work = ioBalancerStub.work()
         while (!isShuttingDown.get()) {
             val assignment = work.read()

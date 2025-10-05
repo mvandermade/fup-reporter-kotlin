@@ -1,0 +1,57 @@
+package com.example.stamp.reporter.workflows.entities
+
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
+import java.time.OffsetDateTime
+
+@Entity
+@Table(
+    name = "workflow_steps",
+    uniqueConstraints = [
+        UniqueConstraint(columnNames = ["workflow", "step_number"]),
+    ],
+)
+class WorkflowStep(
+    @ManyToOne
+    @JoinColumn(name = "workflow_id")
+    var workflow: Workflow,
+    var input: String,
+    @Column(name = "step_number")
+    var stepNumber: Int,
+    @Column(name = "started_at")
+    var startedAt: OffsetDateTime? = null,
+    @Column(name = "callback")
+    @Enumerated(EnumType.STRING)
+    var callback: CallbackType,
+) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    var id: Long = 0L
+
+    var output: String? = null
+
+    @Column(name = "output_at")
+    var outputAt: OffsetDateTime? = null
+
+    @Column(name = "error_message")
+    var errorMessage: String? = null
+
+    @Column(name = "error_at")
+    var errorAt: OffsetDateTime? = null
+
+    // TODO Jpa buddy
+}
+
+enum class CallbackType {
+    TAKE_NEXT,
+    TOMBSTONE,
+}

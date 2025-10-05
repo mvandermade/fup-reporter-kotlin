@@ -30,6 +30,11 @@ spring:
       client-id: ${KAFKA_CLIENT_ID}
       retries: 3
 application:
+  grpc:
+    client:
+      channels:
+        io-balancer:
+          enabled: false
   kafka:
     deadletter-producer:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
