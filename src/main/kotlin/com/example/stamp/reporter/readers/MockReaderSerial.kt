@@ -3,7 +3,7 @@ package com.example.stamp.reporter.readers
 import com.example.stamp.reporter.providers.RandomProvider
 import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
-import com.example.stamp.reporter.workflows.domain.SendToExchangeInput1
+import com.example.stamp.reporter.workflows.domain.ReadStampCode
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -22,7 +22,7 @@ class MockReaderSerial(
         val zdt = timeProvider.zonedDateTimeNowSystem()
         logger.info("Read Serial Event: $input @ $zdt")
         sendToExchangeBroker.save(
-            SendToExchangeInput1(
+            ReadStampCode(
                 readAt = zdt,
                 code = input,
                 idempotencyKey = randomProvider.randomUUID().toString(),

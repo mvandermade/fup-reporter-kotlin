@@ -1,7 +1,7 @@
 package com.example.stamp.reporter.workflows.brokers
 
 import com.example.stamp.reporter.providers.TimeProvider
-import com.example.stamp.reporter.workflows.domain.SendToExchangeInput1
+import com.example.stamp.reporter.workflows.domain.ReadStampCode
 import com.example.stamp.reporter.workflows.entities.CallbackType
 import com.example.stamp.reporter.workflows.entities.Workflow
 import com.example.stamp.reporter.workflows.entities.WorkflowStep
@@ -29,13 +29,17 @@ class SendToExchangeBroker(
         }
 
     @Transactional(rollbackFor = [Exception::class])
-    fun save(input: SendToExchangeInput1) {
-        val workflow = workFlowRepository.save(Workflow(WorkflowType.SEND_TO_EXCHANGE))
+    fun save(input: ReadStampCode) {
+        val programCounter = 1
+        val workflow =
+            workFlowRepository.save(
+                Workflow(WorkflowType.SEND_TO_EXCHANGE, programCounter = programCounter),
+            )
         workflowStepRepository.save(
             WorkflowStep(
                 workflow = workflow,
                 input = objectMapper.writeValueAsString(input),
-                stepNumber = 1,
+                stepNumber = programCounter,
                 startedAt = timeProvider.offsetDateTimeNowSystem(),
                 callback = CallbackType.TOMBSTONE,
             ),

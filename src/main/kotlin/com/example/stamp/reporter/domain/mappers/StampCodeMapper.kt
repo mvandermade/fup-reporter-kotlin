@@ -2,7 +2,7 @@ package com.example.stamp.reporter.domain.mappers
 
 import com.example.stamp.reporter.domain.StampCodeRequest
 import com.example.stamp.reporter.domain.messages.StampCodeDTO
-import com.example.stamp.reporter.workflows.domain.SendToExchangeInput1
+import com.example.stamp.reporter.workflows.domain.ReadStampCode
 import org.springframework.stereotype.Component
 
 @Component
@@ -13,9 +13,9 @@ class StampCodeMapper {
             code = stampCodeDTO.code,
         )
 
-    fun toRequest(sendToExchangeInput1: SendToExchangeInput1) =
+    fun toRequest(readStampCode: ReadStampCode) =
         StampCodeRequest(
-            readAt = sendToExchangeInput1.readAt,
-            code = sendToExchangeInput1.code,
+            readAt = readStampCode.readAt,
+            code = readStampCode.code,
         )
 }

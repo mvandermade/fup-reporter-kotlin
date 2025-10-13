@@ -5,14 +5,39 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="1" author="mvandermade">
+        <createTable tableName="workers">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="hostname" type="varchar(255)"/>
+        </createTable>
+        <createSequence sequenceName="workers_seq"
+                        cycle="false"
+                        dataType="bigint"
+                        incrementBy="50"
+                        maxValue="9223372036854775807"
+                        startValue="1"
+        />
+
         <createTable tableName="workflows">
             <column name="id" type="bigint">
                 <constraints primaryKey="true"/>
             </column>
+            <column name="version" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="program_counter" type="int"/>
             <column name="type" type="varchar(40)"/>
+            <column name="worker_id" type="bigint">
+                <constraints unique="true"/>
+            </column>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE"/>
             <column name="tombstone_collected_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
+        <addForeignKeyConstraint baseTableName="workflows" baseColumnNames="worker_id"
+                                 constraintName="fk_workflows_workers"
+                                 referencedTableName="workers"
+                                 referencedColumnNames="id"/>
         <createSequence sequenceName="workflows_seq"
                         cycle="false"
                         dataType="bigint"

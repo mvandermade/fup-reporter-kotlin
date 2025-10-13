@@ -8,5 +8,10 @@ import org.springframework.stereotype.Repository
 interface WorkflowStepRepository : JpaRepository<WorkflowStep, Long> {
     fun findFirstByOutputIsNullAndErrorMessageIsNull(): WorkflowStep?
 
+    fun findFirstByWorkflowIdAndStepNumber(
+        workflowId: Long,
+        step: Int,
+    ): WorkflowStep?
+
     fun countByErrorMessageIsNotNull(): Long
 }
