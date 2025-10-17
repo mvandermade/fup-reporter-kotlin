@@ -11,5 +11,7 @@
     </preConditions>
     <!--  include separately to preserve ordering  -->
     <include relativeToChangelogFile="true" file="changesets/001-workflow-workflowstep.xml"/>
+    <include relativeToChangelogFile="true" file="changesets/002-workflow-workflowstep-error.xml"/>
+    <include relativeToChangelogFile="true" file="changesets/003-workflow-workflowstep-tombstone.xml"/>
 
 </databaseChangeLog>

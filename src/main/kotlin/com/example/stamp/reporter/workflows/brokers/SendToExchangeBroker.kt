@@ -2,7 +2,7 @@ package com.example.stamp.reporter.workflows.brokers
 
 import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.workflows.domain.ReadStampCode
-import com.example.stamp.reporter.workflows.entities.CallbackType
+import com.example.stamp.reporter.workflows.entities.StepCallbackType
 import com.example.stamp.reporter.workflows.entities.Workflow
 import com.example.stamp.reporter.workflows.entities.WorkflowStep
 import com.example.stamp.reporter.workflows.model.WorkflowType
@@ -41,7 +41,7 @@ class SendToExchangeBroker(
                 input = objectMapper.writeValueAsString(input),
                 stepNumber = programCounter,
                 startedAt = timeProvider.offsetDateTimeNowSystem(),
-                callback = CallbackType.TOMBSTONE,
+                callback = StepCallbackType.TOMBSTONE,
             ),
         )
     }

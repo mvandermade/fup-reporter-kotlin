@@ -28,27 +28,32 @@ class SendToExchangeService(
 
     private val logger = LoggerFactory.getLogger("SendToExchangeExecutor")
 
-    fun process(
-        workflowId: Long,
+    fun doNext(
+        workflowStepId: Long,
         step: Int,
-    ) {
-        val workflowStep =
-            workFlowStepRepository.findFirstByWorkflowIdAndStepNumber(workflowId, step)
-                ?: return logger.info("WorkflowStep with id $step not found")
+        input: String,
+    ): WorkflowResult {
+        val result =
+            when (step) {
+                1 -> sendToExchange(input)
+                else -> throw IllegalArgumentException("Unknown workflow step $step")
+            }
 
-        when (val result = step1(workflowStep.input)) {
+        when (result) {
             is WorkflowResult.Success -> {
-                workflowStepRegistry.save(workflowStep.id, result)
-                logger.info("SendToExchangeStep1: OK $workflowStep")
+                workflowStepRegistry.save(workflowStepId, result)
+                logger.info("SendToExchangeStep1: OK $workflowStepId")
             }
             is WorkflowResult.Error -> {
-                workflowStepRegistry.save(workflowStep.id, result)
-                logger.info("SendToExchangeStep1: NOK $workflowStep")
+                workflowStepRegistry.save(workflowStepId, result)
+                logger.info("SendToExchangeStep1: NOK $workflowStepId")
             }
         }
+
+        return result
     }
 
-    fun step1(rawInput: String): WorkflowResult {
+    fun sendToExchange(rawInput: String): WorkflowResult {
         val input = objectMapper.readValue<ReadStampCode>(rawInput)
         logger.info("Received input: $input")
 

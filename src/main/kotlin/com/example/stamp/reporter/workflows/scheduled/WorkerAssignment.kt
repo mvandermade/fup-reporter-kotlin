@@ -11,7 +11,7 @@ import kotlin.properties.Delegates
 import kotlin.system.exitProcess
 
 @Service
-class WorkerAssignmentScheduled(
+class WorkerAssignment(
     private val workflowRepository: WorkflowRepository,
     private val workerRepository: WorkerRepository,
     private val workerService: WorkerService,

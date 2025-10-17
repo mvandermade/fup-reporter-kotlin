@@ -6,12 +6,12 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface WorkflowStepRepository : JpaRepository<WorkflowStep, Long> {
-    fun findFirstByOutputIsNullAndErrorMessageIsNull(): WorkflowStep?
-
     fun findFirstByWorkflowIdAndStepNumber(
         workflowId: Long,
         step: Int,
     ): WorkflowStep?
 
     fun countByErrorMessageIsNotNull(): Long
+
+    fun findAllByWorkflowId(workflowId: Long): List<WorkflowStep>
 }

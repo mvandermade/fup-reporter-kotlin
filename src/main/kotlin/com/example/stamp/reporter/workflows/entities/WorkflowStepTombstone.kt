@@ -16,15 +16,15 @@ import java.time.OffsetDateTime
 
 @Entity
 @Table(
-    name = "workflow_steps",
+    name = "workflow_step_tombstones",
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["workflow", "step_number"]),
     ],
 )
-class WorkflowStep(
+class WorkflowStepTombstone(
     @ManyToOne(cascade = [CascadeType.REMOVE])
-    @JoinColumn(name = "workflow_id")
-    var workflow: Workflow,
+    @JoinColumn(name = "workflow_tombstone_id")
+    var workflowTombstone: WorkflowTombstone,
     var input: String,
     @Column(name = "step_number")
     var stepNumber: Int,
