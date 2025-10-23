@@ -41,7 +41,12 @@ class WorkerAssignment(
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorker() {
         try {
-            workerManagement.assignWorker(workerId)
+            try {
+                if (!workerManagement.workflowIdLock.tryLock(800, TimeUnit.MILLISECONDS)) return
+                workerManagement.assignWorker(workerId)
+            } finally {
+                workerManagement.workflowIdLock.unlock()
+            }
         } catch (e: Exception) {
             logger.error("Failed to assign worker: ${e.message}")
         }
