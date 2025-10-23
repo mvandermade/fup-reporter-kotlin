@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface WorkflowRepository : JpaRepository<Workflow, Long> {
     fun findFirstByWorkerIsNull(): Workflow?
+
+    fun findAllByWorkerIdIs(workerId: Long): List<Workflow>
 }

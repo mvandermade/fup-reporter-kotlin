@@ -1,11 +1,13 @@
 package com.example.stamp.reporter.workflows.services
 
 import com.example.stamp.reporter.apicallers.feign.StampServerApi
-import com.example.stamp.reporter.domain.mappers.StampCodeMapper
-import com.example.stamp.reporter.workflows.domain.ReadStampCode
+import com.example.stamp.reporter.domain.messages.ReadStampCode
+import com.example.stamp.reporter.websockets.domain.WebSocketAckExchangeMessage
+import com.example.stamp.reporter.websockets.domain.WebSocketPostExchangeMessage
+import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.example.stamp.reporter.workflows.domain.WorkflowResult
+import com.example.stamp.reporter.workflows.mappers.StampCodeMapper
 import com.example.stamp.reporter.workflows.processors.WorkflowStepRegistry
-import com.example.stamp.reporter.workflows.repositories.WorkflowStepRepository
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Service
 class SendToExchangeService(
     private val stampServerApi: StampServerApi,
     private val stampCodeMapper: StampCodeMapper,
-    private val workFlowStepRepository: WorkflowStepRepository,
+    private val trackerWebsocketHandler: TrackerWebsocketHandler,
     private val workflowStepRegistry: WorkflowStepRegistry,
 ) {
     private val objectMapper =
@@ -46,7 +48,7 @@ class SendToExchangeService(
             }
             is WorkflowResult.Error -> {
                 workflowStepRegistry.save(workflowStepId, result)
-                logger.info("SendToExchangeStep1: NOK $workflowStepId")
+                logger.info("SendToExchangeStep1: NOK stepId: $workflowStepId, message: ${result.message}")
             }
         }
 
@@ -54,18 +56,23 @@ class SendToExchangeService(
     }
 
     fun sendToExchange(rawInput: String): WorkflowResult {
-        val input = objectMapper.readValue<ReadStampCode>(rawInput)
-        logger.info("Received input: $input")
+        val readStampCode = objectMapper.readValue<ReadStampCode>(rawInput)
+        logger.info("Received input: $readStampCode")
 
         try {
+            trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
+            Thread.sleep(500)
+
             stampServerApi.postStampCode(
-                stampCodeMapper.toRequest(input),
-                input.idempotencyKey,
+                stampCodeMapper.toRequest(readStampCode),
+                readStampCode.idempotencyKey,
             )
+
+            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send stamp code to exchange: ${e.message}")
         }
 
-        return WorkflowResult.Success("Successfully sent stamp code to exchange")
+        return WorkflowResult.Success("Successfully sent stamp code to exchange + notified WS")
     }
 }

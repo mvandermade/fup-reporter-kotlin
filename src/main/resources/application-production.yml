@@ -20,26 +20,16 @@ spring:
   liquibase:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
-  kafka:
-    consumer:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    producer:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      client-id: ${KAFKA_CLIENT_ID}
-      retries: 3
+  task:
+    scheduling:
+      pool:
+        size: 4
 application:
   grpc:
     client:
       channels:
         io-balancer:
           enabled: false
-  kafka:
-    deadletter-producer:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
-    consumer:
-      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
   api-callers:
     stamp-server:
       url: ${STAMP_SERVER_URL}

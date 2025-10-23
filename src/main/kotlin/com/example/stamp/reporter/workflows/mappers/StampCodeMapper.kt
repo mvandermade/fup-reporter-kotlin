@@ -1,8 +1,8 @@
-package com.example.stamp.reporter.domain.mappers
+package com.example.stamp.reporter.workflows.mappers
 
-import com.example.stamp.reporter.domain.StampCodeRequest
+import com.example.stamp.reporter.domain.messages.ReadStampCode
 import com.example.stamp.reporter.domain.messages.StampCodeDTO
-import com.example.stamp.reporter.workflows.domain.ReadStampCode
+import com.example.stamp.reporter.domain.requests.StampCodeRequest
 import org.springframework.stereotype.Component
 
 @Component

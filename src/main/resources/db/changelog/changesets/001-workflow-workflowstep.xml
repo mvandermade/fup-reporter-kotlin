@@ -10,6 +10,7 @@
                 <constraints primaryKey="true"/>
             </column>
             <column name="hostname" type="varchar(255)"/>
+            <column name="expire_heartbeat_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
         <createSequence sequenceName="workers_seq"
                         cycle="false"

@@ -1,6 +1,6 @@
 package com.example.stamp.reporter.apicallers.feign
 
-import com.example.stamp.reporter.domain.StampCodeRequest
+import com.example.stamp.reporter.domain.requests.StampCodeRequest
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader

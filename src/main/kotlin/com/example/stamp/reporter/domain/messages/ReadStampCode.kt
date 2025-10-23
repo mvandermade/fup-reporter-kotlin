@@ -1,4 +1,4 @@
-package com.example.stamp.reporter.workflows.domain
+package com.example.stamp.reporter.domain.messages
 
 import java.time.ZonedDateTime
 

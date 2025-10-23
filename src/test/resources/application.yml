@@ -9,13 +9,6 @@ spring:
       ddl-auto: validate
     show-sql: false
     open-in-view: false
-  kafka:
-    producer:
-      bootstrap-servers: localhost:9092
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      client-id: made-funicular-stamp-reporter-kotlin
-      retries: 3
   liquibase:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
@@ -28,10 +21,5 @@ application:
       channels:
         io-balancer:
           enabled: true
-  kafka:
-    deadletter-producer:
-      bootstrap-servers: localhost:9092
-    consumer:
-      bootstrap-servers: localhost:9092
 server:
   port: 8882

@@ -1,38 +1,39 @@
-package com.example.stamp.reporter.workflows.scheduled
+package com.example.stamp.reporter.workflows.workers
 
 import com.example.stamp.reporter.workflows.domain.WorkflowResult
 import com.example.stamp.reporter.workflows.model.WorkflowType
 import com.example.stamp.reporter.workflows.repositories.WorkflowRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowStepRepository
 import com.example.stamp.reporter.workflows.services.SendToExchangeService
-import com.example.stamp.reporter.workflows.services.WorkerService
 import com.example.stamp.reporter.workflows.services.WorkflowService
 import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
-class WorkflowProcessor(
+class WorkerProcessor(
     private val sendToExchangeService: SendToExchangeService,
     private val workflowStepRepository: WorkflowStepRepository,
     private val workflowRepository: WorkflowRepository,
-    private val workerService: WorkerService,
+    private val workerManagement: WorkerManagement,
     private val workflowService: WorkflowService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelay = 1000)
+    // Prevent thread racing and use a lock around this function
     fun processWorkflow() {
         val workflowId =
-            workerService.workflowId
+            workerManagement.workflowId
                 ?: return
         val workflow = workflowRepository.findByIdOrNull(workflowId)
         if (workflow == null) {
             logger.info("Workflow with id $workflowId not found, possibly tombstoned or errored out, resetting worker")
-            workerService.workflowId = null
+            workerManagement.workflowId = null
+            // Give the worker one more try
+            processWorkflow()
             return
         }
+
         val workflowStep =
             workflowStepRepository.findFirstByWorkflowIdAndStepNumber(workflowId, workflow.programCounter)
                 ?: return logger.info("WorkflowStep with step ${workflow.programCounter} not found for workflowId $workflowId")

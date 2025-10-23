@@ -10,10 +10,12 @@ import com.example.stamp.reporter.workflows.repositories.WorkflowStepErrorReposi
 import com.example.stamp.reporter.workflows.repositories.WorkflowStepRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowStepTombstoneRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowTombstoneRepository
+import com.example.stamp.reporter.workflows.workers.WorkerManagement
 import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.concurrent.TimeUnit
 
 @Service
 class WorkflowService(
@@ -25,6 +27,7 @@ class WorkflowService(
     private val workflowStepErrorRepository: WorkflowStepErrorRepository,
     private val workflowTombstoneRepository: WorkflowTombstoneRepository,
     private val workflowStepTombstoneRepository: WorkflowStepTombstoneRepository,
+    private val workerManagement: WorkerManagement,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -55,9 +58,16 @@ class WorkflowService(
         val stepsTombstone = workflowSteps.map { workflowStepMapper.toTombstone(it, workflowTombstone) }
 
         workflowStepTombstoneRepository.saveAll(stepsTombstone)
-
         // Cascade delete
         workflowRepository.delete(workflow)
+        // Reset local worker
+        try {
+            if (workerManagement.workflowIdLock.tryLock(1000, TimeUnit.MILLISECONDS)) {
+                workerManagement.workflowId = null
+            }
+        } finally {
+            workerManagement.workflowIdLock.unlock()
+        }
     }
 
     @Transactional(rollbackFor = [Exception::class])

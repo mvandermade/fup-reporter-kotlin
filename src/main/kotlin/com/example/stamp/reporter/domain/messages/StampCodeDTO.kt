@@ -6,5 +6,4 @@ data class StampCodeDTO(
     val readAt: ZonedDateTime,
     val code: String,
     val idempotencyKey: String,
-    override val kafkaKey: String,
-) : KafkaMessage
+)
