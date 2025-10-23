@@ -63,10 +63,10 @@ class WorkerAssignment(
     }
 
     @Scheduled(fixedDelay = 1000)
-    fun processWorkflow() {
+    fun processAnyWorkflow() {
         try {
             if (!workerManagement.workflowIdLock.tryLock(800, TimeUnit.MILLISECONDS)) return
-            workerProcessor.processWorkflow()
+            workerProcessor.processAnyWorkflow()
         } finally {
             workerManagement.workflowIdLock.unlock()
         }
