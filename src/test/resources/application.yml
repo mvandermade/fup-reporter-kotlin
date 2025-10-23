@@ -23,6 +23,11 @@ application:
   api-callers:
     stamp-server:
       url: http://localhost:8881
+  grpc:
+    client:
+      channels:
+        io-balancer:
+          enabled: true
   kafka:
     deadletter-producer:
       bootstrap-servers: localhost:9092
