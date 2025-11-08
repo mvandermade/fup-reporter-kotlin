@@ -34,21 +34,20 @@ class SendToExchangeService(
     fun doNext(
         workflowStepId: Long,
         step: Int,
-        input: String,
+        rawInput: String?,
     ): WorkflowResult {
         val result =
             when (step) {
-                1 -> sendToExchange(input)
+                1 -> notifySendAction(rawInput)
+                2 -> sendToExchange(rawInput)
+                3 -> notifySentAction(rawInput)
                 else -> throw IllegalArgumentException("Unknown workflow step $step")
             }
 
         when (result) {
             is WorkflowResult.Success -> {
-                val saveTime =
-                    measureTime {
-                        workflowStepRegistry.save(workflowStepId, result)
-                    }
-                logger.info("SendToExchangeStep1: OK $workflowStepId saving workflow took $saveTime ms")
+                workflowStepRegistry.save(workflowStepId, result)
+                logger.info("SendToExchangeStep1: OK")
             }
             is WorkflowResult.Error -> {
                 workflowStepRegistry.save(workflowStepId, result)
@@ -59,12 +58,23 @@ class SendToExchangeService(
         return result
     }
 
-    fun sendToExchange(rawInput: String): WorkflowResult {
-        val readStampCode = objectMapper.readValue<ReadStampCode>(rawInput)
-        logger.info("Received input: $readStampCode")
-
+    fun notifySendAction(rawInput: String?): WorkflowResult {
         try {
+            val readStampCode =
+                rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
+            logger.info("Sending to users read input: $readStampCode")
             trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
+        } catch (e: Exception) {
+            return WorkflowResult.Error("Failed to send read input to users: ${e.message}")
+        }
+        return WorkflowResult.Success(rawInput)
+    }
+
+    fun sendToExchange(rawInput: String?): WorkflowResult {
+        try {
+            val readStampCode =
+                rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
+            logger.info("Received input to send to exchange: $readStampCode")
 
             val time =
                 measureTime {
@@ -74,10 +84,20 @@ class SendToExchangeService(
                     )
                 }
             logger.info("Sent stamp code to exchange in $time")
-
-            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send stamp code to exchange: ${e.message}")
+        }
+        return WorkflowResult.Success(rawInput)
+    }
+
+    fun notifySentAction(rawInput: String?): WorkflowResult {
+        try {
+            val readStampCode =
+                rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
+            logger.info("Sending to users ack: $readStampCode")
+            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
+        } catch (e: Exception) {
+            return WorkflowResult.Error("Failed to send ack to users: ${e.message}")
         }
 
         return WorkflowResult.Success("Successfully sent stamp code to exchange + notified WS")

@@ -25,7 +25,7 @@ class WorkflowStep(
     @ManyToOne(cascade = [CascadeType.REMOVE])
     @JoinColumn(name = "workflow_id")
     var workflow: Workflow,
-    var input: String,
+    var input: String?,
     @Column(name = "step_number")
     var stepNumber: Int,
     @Column(name = "started_at")

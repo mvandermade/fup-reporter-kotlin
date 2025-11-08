@@ -60,7 +60,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="input" type="clob">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="step_number" type="int">
                 <constraints nullable="false"/>

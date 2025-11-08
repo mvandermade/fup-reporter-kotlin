@@ -25,7 +25,7 @@ class WorkflowStepError(
     @ManyToOne(cascade = [CascadeType.REMOVE])
     @JoinColumn(name = "workflow_error_id")
     var workflowError: WorkflowError,
-    var input: String,
+    var input: String?,
     @Column(name = "step_number")
     var stepNumber: Int,
     @Column(name = "started_at")

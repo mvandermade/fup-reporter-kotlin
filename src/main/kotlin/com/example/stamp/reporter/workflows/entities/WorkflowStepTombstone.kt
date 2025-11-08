@@ -25,7 +25,7 @@ class WorkflowStepTombstone(
     @ManyToOne(cascade = [CascadeType.REMOVE])
     @JoinColumn(name = "workflow_tombstone_id")
     var workflowTombstone: WorkflowTombstone,
-    var input: String,
+    var input: String?,
     @Column(name = "step_number")
     var stepNumber: Int,
     @Column(name = "started_at")

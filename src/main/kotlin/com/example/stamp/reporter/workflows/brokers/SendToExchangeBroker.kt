@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -41,8 +42,43 @@ class SendToExchangeBroker(
                 input = objectMapper.writeValueAsString(input),
                 stepNumber = programCounter,
                 startedAt = timeProvider.offsetDateTimeNowSystem(),
-                callback = StepCallbackType.TOMBSTONE,
+                callback = StepCallbackType.TAKE_NEXT,
             ),
         )
+    }
+
+    @Transactional(rollbackFor = [Exception::class])
+    fun finalize(
+        workflow: Workflow,
+        workflowStepId: Long,
+    ) {
+        val workflowStep =
+            workflowStepRepository.findByIdOrNull(workflowStepId)
+                ?: throw Exception("Workflow step with id $workflowStepId not found")
+
+        when (workflow.programCounter) {
+            1 -> {
+                workflowStepRepository.save(
+                    WorkflowStep(
+                        workflow = workflow,
+                        input = workflowStep.output,
+                        stepNumber = workflow.programCounter + 1,
+                        startedAt = workflowStep.startedAt,
+                        callback = StepCallbackType.TAKE_NEXT,
+                    ),
+                )
+            }
+            2 -> {
+                workflowStepRepository.save(
+                    WorkflowStep(
+                        workflow = workflow,
+                        input = workflowStep.output,
+                        stepNumber = workflow.programCounter + 1,
+                        startedAt = workflowStep.startedAt,
+                        callback = StepCallbackType.TOMBSTONE,
+                    ),
+                )
+            }
+        }
     }
 }

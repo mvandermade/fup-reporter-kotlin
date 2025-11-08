@@ -25,7 +25,7 @@ class WorkerAssignment(
     // Every second make sure the worker picks something up if it's idling
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorker() {
-        logger.info("Scheduled Update Worker increment work each 1000ms")
+//        logger.info("Scheduled Update Worker increment work each 1000ms")
         wakeUpWorker.incrementWork()
     }
 

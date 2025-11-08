@@ -70,7 +70,7 @@ class WakeUpWorker(
                 // Important to give a timeout because otherwise the application cannot shut down gracefully
                 wakeUpCondition.await(AWAIT_WAKEUP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 if (queueDepthCounter.get() > 0) {
-                    logger.info("Queue depth is ${queueDepthCounter.get()}, trying to assign a worker...")
+//                    logger.info("Queue depth is ${queueDepthCounter.get()}, trying to assign a worker...")
                     for (i in 0..<queueDepthCounter.get()) {
                         queueDepthCounter.decrementAndGet()
                         when (workerManagement.assignWorker()) {
@@ -80,7 +80,7 @@ class WakeUpWorker(
                                 logger.info("Work done, going to await next wakeup")
                             }
                             WorkerAssignmentResult.NoWorkflowFound -> {
-                                logger.info("No workflow found, going to await next wakeup")
+//                                logger.info("No workflow found, going to await next wakeup")
                             }
                             WorkerAssignmentResult.WorkerAlreadyAssigned -> {
                                 logger.info("Worker is already assigned, going to await next wakeup")
@@ -124,7 +124,7 @@ class WakeUpWorker(
             workerProcessor.processAnyWorkflow()
             WorkResult.Success
         } catch (e: Exception) {
-            logger.error("Failed to process any workflow: ${e.message}")
+            logger.error("Failed to process any workflow: ", e)
             WorkResult.Failure
         } finally {
             workerManagement.workflowIdLock.unlock()

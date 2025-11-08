@@ -39,9 +39,11 @@ class WorkerProcessor(
         when (workflow.type) {
             WorkflowType.SEND_TO_EXCHANGE -> {
                 logger.info("Processing workflow of type SEND_TO_EXCHANGE")
-                val result = sendToExchangeService.doNext(workflowId, workflow.programCounter, workflowStep.input)
+                val result = sendToExchangeService.doNext(workflowStep.id, workflow.programCounter, workflowStep.input)
                 when (result) {
-                    is WorkflowResult.Success -> workflowService.markSuccess(workflowId, workflowStep.callback)
+                    is WorkflowResult.Success -> {
+                        workflowService.markSuccess(workflowId, workflowStep.id, workflowStep.callback)
+                    }
                     is WorkflowResult.Error -> workflowService.markError(workflowId)
                 }
             }

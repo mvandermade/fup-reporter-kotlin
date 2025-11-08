@@ -54,7 +54,7 @@ class WorkerManagement(
                 ?: throw Exception("Worker with id ${workerId.workerId} not found")
 
         worker.expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem().plusSeconds(HEARTBEAT_ADD_SECONDS)
-        logger.info("Updated expire heartbeat of worker ${worker.hostname} to ${worker.expireHeartBeatAt}")
+//        logger.info("Updated expire heartbeat of worker ${worker.hostname} to ${worker.expireHeartBeatAt}")
         workerRepository.save(worker)
     }
 

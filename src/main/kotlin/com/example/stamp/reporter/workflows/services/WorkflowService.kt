@@ -1,5 +1,6 @@
 package com.example.stamp.reporter.workflows.services
 
+import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import com.example.stamp.reporter.workflows.entities.StepCallbackType
 import com.example.stamp.reporter.workflows.entities.Workflow
 import com.example.stamp.reporter.workflows.mappers.WorkflowMapper
@@ -28,12 +29,14 @@ class WorkflowService(
     private val workflowTombstoneRepository: WorkflowTombstoneRepository,
     private val workflowStepTombstoneRepository: WorkflowStepTombstoneRepository,
     private val workerManagement: WorkerManagement,
+    private val sendToExchangeBroker: SendToExchangeBroker,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @Transactional(rollbackFor = [Exception::class])
     fun markSuccess(
         workflowId: Long,
+        workflowStepId: Long,
         callbackType: StepCallbackType,
     ) {
         val workflow =
@@ -42,6 +45,7 @@ class WorkflowService(
 
         when (callbackType) {
             StepCallbackType.TAKE_NEXT -> {
+                sendToExchangeBroker.finalize(workflow, workflowStepId)
                 workflow.programCounter += 1
                 workflowRepository.save(workflow)
             }
