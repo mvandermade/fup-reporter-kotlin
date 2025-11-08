@@ -29,8 +29,6 @@ class WorkerProcessor(
         if (workflow == null) {
             logger.info("Workflow with id $workflowId not found, possibly tombstoned or errored out, resetting worker")
             workerManagement.workflowId = null
-            // Give the worker one more try
-            processAnyWorkflow()
             return
         }
 

@@ -11,11 +11,20 @@ import java.util.concurrent.locks.ReentrantLock
 
 private const val HEARTBEAT_ADD_SECONDS = 60L
 
+sealed class WorkerAssignmentResult {
+    object WorkerAlreadyAssigned : WorkerAssignmentResult()
+
+    object NoWorkflowFound : WorkerAssignmentResult()
+
+    object Assigned : WorkerAssignmentResult()
+}
+
 @Service
 class WorkerManagement(
     private val workflowRepository: WorkflowRepository,
     private val workerRepository: WorkerRepository,
     private val timeProvider: TimeProvider,
+    private val workerId: WorkerId,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -25,38 +34,49 @@ class WorkerManagement(
     val workflowIdLock = ReentrantLock(true)
 
     @Transactional(rollbackFor = [Exception::class])
-    fun assignWorker(workerId: Long) {
-        if (workflowId != null) return
+    fun assignWorker(): WorkerAssignmentResult {
+        if (workflowId != null) return WorkerAssignmentResult.WorkerAlreadyAssigned
         val newWorkflow =
             workflowRepository.findFirstByWorkerIsNull()
-                ?: return
+                ?: return WorkerAssignmentResult.NoWorkflowFound
 
-        val worker = workerRepository.getReferenceById(workerId)
+        val worker = workerRepository.getReferenceById(workerId.workerId)
         newWorkflow.worker = worker
         workflowId = workflowRepository.save(newWorkflow).id
         logger.info("workflowId is now: $workflowId")
+        return WorkerAssignmentResult.Assigned
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    fun updateHeartBeat(workerId: Long) {
+    fun updateHeartBeat() {
         val worker =
-            workerRepository.findByIdOrNull(workerId)
-                ?: throw Exception("Worker with id $workerId not found")
+            workerRepository.findByIdOrNull(workerId.workerId)
+                ?: throw Exception("Worker with id ${workerId.workerId} not found")
 
         worker.expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem().plusSeconds(HEARTBEAT_ADD_SECONDS)
+        logger.info("Updated expire heartbeat of worker ${worker.hostname} to ${worker.expireHeartBeatAt}")
         workerRepository.save(worker)
     }
 
     @Transactional(rollbackFor = [Exception::class])
     fun cleanupAnyExpiredHeartBeat() {
-        val worked =
-            workerRepository.findFirstByExpireHeartBeatAtBefore(timeProvider.offsetDateTimeNowSystem())
-                ?: return
-        logger.info("Cleanup worker: ${worked.hostname}")
-        // Clean up any reserved workflows first in transaction
-        workflowRepository.findAllByWorkerIdIs(worked.id).forEach { workflow ->
-            workflow.worker = null
+        try {
+            val offsetDateTimeNow = timeProvider.offsetDateTimeNowSystem()
+            val expiredWorker =
+                workerRepository.findFirstByExpireHeartBeatAtBefore(offsetDateTimeNow)
+                    ?: return
+            logger.info(
+                "Cleaning up worker: ${expiredWorker.hostname}. Time now = $offsetDateTimeNow, " +
+                    "expire heartbeat of the expired worker = ${expiredWorker.expireHeartBeatAt}",
+            )
+            // Clean up any reserved workflows first in transaction
+            workflowRepository.findAllByWorkerIdIs(expiredWorker.id).forEach { workflow ->
+                workflow.worker = null
+            }
+            workerRepository.delete(expiredWorker)
+        } catch (e: Exception) {
+            logger.error("Failed to cleanup any expired heart beat: ${e.message}")
+            throw e
         }
-        workerRepository.delete(worked)
     }
 }

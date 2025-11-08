@@ -36,6 +36,10 @@
             </column>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
+        <!-- For scheduled task /-->
+        <createIndex indexName="idx_workflows_worker_id" tableName="workflows">
+            <column name="worker_id"/>
+        </createIndex>
         <addForeignKeyConstraint baseTableName="workflows" baseColumnNames="worker_id"
                                  constraintName="fk_workflows_workers"
                                  referencedTableName="workers"

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import kotlin.time.measureTime
 
 @Service
 class SendToExchangeService(
@@ -43,8 +44,11 @@ class SendToExchangeService(
 
         when (result) {
             is WorkflowResult.Success -> {
-                workflowStepRegistry.save(workflowStepId, result)
-                logger.info("SendToExchangeStep1: OK $workflowStepId")
+                val saveTime =
+                    measureTime {
+                        workflowStepRegistry.save(workflowStepId, result)
+                    }
+                logger.info("SendToExchangeStep1: OK $workflowStepId saving workflow took $saveTime ms")
             }
             is WorkflowResult.Error -> {
                 workflowStepRegistry.save(workflowStepId, result)
@@ -61,12 +65,15 @@ class SendToExchangeService(
 
         try {
             trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
-            Thread.sleep(500)
 
-            stampServerApi.postStampCode(
-                stampCodeMapper.toRequest(readStampCode),
-                readStampCode.idempotencyKey,
-            )
+            val time =
+                measureTime {
+                    stampServerApi.postStampCode(
+                        stampCodeMapper.toRequest(readStampCode),
+                        readStampCode.idempotencyKey,
+                    )
+                }
+            logger.info("Sent stamp code to exchange in $time")
 
             trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
         } catch (e: Exception) {

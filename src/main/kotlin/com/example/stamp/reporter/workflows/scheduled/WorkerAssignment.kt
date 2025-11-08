@@ -1,63 +1,40 @@
 package com.example.stamp.reporter.workflows.scheduled
 
-import com.example.stamp.reporter.providers.TimeProvider
-import com.example.stamp.reporter.workflows.entities.Worker
-import com.example.stamp.reporter.workflows.repositories.WorkerRepository
+import com.example.stamp.reporter.workflows.workers.WakeUpWorker
 import com.example.stamp.reporter.workflows.workers.WorkerManagement
-import com.example.stamp.reporter.workflows.workers.WorkerProcessor
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
-import kotlin.properties.Delegates
 import kotlin.system.exitProcess
+
+sealed class WorkResult {
+    object WorkerBusy : WorkResult()
+
+    object Success : WorkResult()
+
+    object Failure : WorkResult()
+}
 
 @Service
 class WorkerAssignment(
-    workerRepository: WorkerRepository,
     private val workerManagement: WorkerManagement,
-    timeProvider: TimeProvider,
-    private val workerProcessor: WorkerProcessor,
+    private val wakeUpWorker: WakeUpWorker,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    var workerId by Delegates.notNull<Long>()
 
-    init {
-        workerId =
-            try {
-                workerRepository
-                    .save(
-                        Worker(
-                            hostname = "localhost",
-                            expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem(),
-                        ),
-                    ).id
-            } catch (e: Exception) {
-                logger.error("Failed to save worker: ${e.message}")
-                exitProcess(-1)
-            }
-    }
-
+    // Every second make sure the worker picks something up if it's idling
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorker() {
-        try {
-            try {
-                if (!workerManagement.workflowIdLock.tryLock(800, TimeUnit.MILLISECONDS)) return
-                workerManagement.assignWorker(workerId)
-            } finally {
-                workerManagement.workflowIdLock.unlock()
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to assign worker: ${e.message}")
-        }
+        logger.info("Scheduled Update Worker increment work each 1000ms")
+        wakeUpWorker.incrementWork()
     }
 
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorkerHeartBeat() {
         try {
-            workerManagement.updateHeartBeat(workerId)
+            workerManagement.updateHeartBeat()
         } catch (e: Exception) {
-            logger.error("Failed to update worker heartbeat: ${e.message} exiting hard...")
+            logger.error("Failed to update worker heartbeat: ${e.message} exiting hard...", e)
             exitProcess(-1)
         }
     }
@@ -67,13 +44,9 @@ class WorkerAssignment(
         workerManagement.cleanupAnyExpiredHeartBeat()
     }
 
-    @Scheduled(fixedDelay = 1000)
-    fun processAnyWorkflow() {
-        try {
-            if (!workerManagement.workflowIdLock.tryLock(800, TimeUnit.MILLISECONDS)) return
-            workerProcessor.processAnyWorkflow()
-        } finally {
-            workerManagement.workflowIdLock.unlock()
-        }
+    // In the case a poke did not arrive
+    @Scheduled(fixedDelay = 2000)
+    fun pokeWorker() {
+        wakeUpWorker.poke()
     }
 }
