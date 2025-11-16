@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.time.measureTime
 
 @Service
 class WorkflowStepRegistry(
@@ -28,11 +27,7 @@ class WorkflowStepRegistry(
         workflowStep.output = workflowResult.output
         workflowStep.outputAt = timeProvider.offsetDateTimeNowSystem()
 
-        val time =
-            measureTime {
-                workflowStepRepository.save(workflowStep)
-            }
-        logger.info("Saving step took $time")
+        workflowStepRepository.save(workflowStep)
     }
 
     @Transactional(rollbackFor = [Exception::class])

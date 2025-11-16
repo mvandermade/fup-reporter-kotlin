@@ -13,18 +13,14 @@ import com.example.stamp.reporter.workflows.scheduled.WorkResult
 import com.example.stamp.reporter.workflows.services.SendToExchangeService
 import com.example.stamp.reporter.workflows.services.WorkflowService
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.event.ContextClosedEvent
-import org.springframework.context.event.EventListener
-import org.springframework.core.task.TaskExecutor
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.properties.Delegates
 import kotlin.system.exitProcess
 
 // Keep this small its only job is to wake up the worker
@@ -37,11 +33,11 @@ sealed class WorkerAssignmentResult {
     object NoWorkflowFound : WorkerAssignmentResult()
 
     object Assigned : WorkerAssignmentResult()
+
+    object OptimisticLockingFailure : WorkerAssignmentResult()
 }
 
-@Component
 class WorkerDaemon(
-    @param:Qualifier("applicationTaskExecutor") private val taskExecutor: TaskExecutor,
     private val workflowRepository: WorkflowRepository,
     private val workflowStepRepository: WorkflowStepRepository,
     private val sendToExchangeService: SendToExchangeService,
@@ -49,57 +45,29 @@ class WorkerDaemon(
     private val workerRepository: WorkerRepository,
     private val timeProvider: TimeProvider,
     private val transactionProvider: TransactionProvider,
+    private val lock: ReentrantLock,
+    private val wakeUpCondition: Condition,
+    private val queueDepthCounter: AtomicLong,
+    private val isShuttingDown: AtomicBoolean,
 ) {
-    private val lock = ReentrantLock(true)
-    private val wakeUpCondition = lock.newCondition()
-    private val queueDepthCounter = AtomicLong(0)
-
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private val isShuttingDown = AtomicBoolean(false)
+    private var workerId by Delegates.notNull<Long>()
 
-    val workerId =
-        try {
-            workerRepository
-                .save(
-                    Worker(
-                        hostname = "localhost",
-                        expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem(),
-                    ),
-                ).id
-        } catch (e: Exception) {
-            logger.error("Failed to save worker: ${e.message}")
-            exitProcess(-1)
-        }
-
-    @EventListener(ApplicationReadyEvent::class)
-    fun startWakeUpListener() {
-        taskExecutor.execute {
-            awaitWakeUp()
-        }
-    }
-
-    @EventListener(ContextClosedEvent::class)
-    fun onContextClosedEvent(contextClosedEvent: ContextClosedEvent) {
-        println("ContextClosedEvent occurred at millis: " + contextClosedEvent.getTimestamp())
-        isShuttingDown.set(true)
-    }
-
-    fun incrementWork() {
-        queueDepthCounter.incrementAndGet()
-        poke()
-    }
-
-    fun poke() {
-        val acquired = lock.tryLock(0, TimeUnit.MILLISECONDS)
-        // Loop is already running, no need to wake it up
-        if (!acquired) return
-
-        try {
-            wakeUpCondition.signal()
-        } finally {
-            lock.unlock()
-        }
+    init {
+        workerId =
+            try {
+                workerRepository
+                    .save(
+                        Worker(
+                            hostname = "localhost",
+                            expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem(),
+                        ),
+                    ).id
+            } catch (e: Exception) {
+                logger.error("Failed to save worker: ${e.message}")
+                exitProcess(-1)
+            }
     }
 
     fun awaitWakeUp() {
@@ -109,23 +77,18 @@ class WorkerDaemon(
                 // Important to give a timeout because otherwise the application cannot shut down gracefully
                 wakeUpCondition.await(AWAIT_WAKEUP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
                 if (queueDepthCounter.get() > 0) {
-//                    logger.info("Queue depth is ${queueDepthCounter.get()}, trying to assign a worker...")
                     for (i in 0..<queueDepthCounter.get()) {
                         queueDepthCounter.decrementAndGet()
                         when (assignWorker()) {
+                            // Because of the condition no thread race to doWork is possible.
                             WorkerAssignmentResult.Assigned -> {
-                                logger.info("Assigned a worker! Proceeding to do work...")
                                 doWork()
-                                logger.info("Work done, going to await next wakeup")
-                            }
-                            WorkerAssignmentResult.NoWorkflowFound -> {
-//                                logger.info("No workflow found, going to await next wakeup")
                             }
                             WorkerAssignmentResult.WorkerAlreadyAssigned -> {
-                                logger.info("Worker is already assigned, going to await next wakeup")
-                                // Do work anyway reentrantlock prevents deadlock
                                 doWork()
                             }
+                            WorkerAssignmentResult.NoWorkflowFound -> {}
+                            WorkerAssignmentResult.OptimisticLockingFailure -> {}
                         }
                     }
                 }
@@ -146,12 +109,12 @@ class WorkerDaemon(
 
             WorkResult.Success -> {
                 val duration = System.currentTimeMillis() - time
-                logger.info("Successfully processed a workflow, took $duration ms")
+                logger.info("Successfully processed a doWork(), took $duration ms")
             }
 
             WorkResult.Failure -> {
                 val duration = System.currentTimeMillis() - time
-                logger.info("Failed to process a workflow, took $duration ms")
+                logger.info("Failed to process a doWork(), took $duration ms")
             }
         }
     }
@@ -186,7 +149,7 @@ class WorkerDaemon(
 
         when (workflow.type) {
             WorkflowType.SEND_TO_EXCHANGE -> {
-                logger.info("Processing workflow of type SEND_TO_EXCHANGE")
+                logger.info("Processing workflow $workflowId of type SEND_TO_EXCHANGE programCounter: ${workflow.programCounter}")
                 val result = sendToExchangeService.doNext(workflowStep.id, workflow.programCounter, workflowStep.input)
                 when (result) {
                     is WorkflowResult.Success -> {
@@ -201,7 +164,10 @@ class WorkerDaemon(
                                     workflowIdLock.unlock()
                                 }
                             }
-                            else -> {}
+
+                            StepCallbackType.TAKE_NEXT -> {
+                                queueDepthCounter.incrementAndGet()
+                            }
                         }
                     }
                     is WorkflowResult.Error -> workflowService.markError(localWorkflowId)
@@ -216,28 +182,42 @@ class WorkerDaemon(
     val workflowIdLock = ReentrantLock(true)
 
     fun assignWorker(): WorkerAssignmentResult {
-        return transactionProvider.newReadWrite {
-            if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
-            val newWorkflow =
-                workflowRepository.findFirstByWorkerIsNull()
-                    ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
+        var newWorkflowId: Long? = null
+        try {
+            val result =
+                transactionProvider.newReadWrite {
+                    if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
+                    val newWorkflow =
+                        workflowRepository.findFirstByWorkerIsNull()
+                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
 
-            val worker = workerRepository.getReferenceById(workerId)
-            newWorkflow.worker = worker
-            workflowId = workflowRepository.save(newWorkflow).id
-            logger.info("workflowId is now: $workflowId")
-            WorkerAssignmentResult.Assigned
+                    val worker = workerRepository.getReferenceById(workerId)
+                    newWorkflow.worker = worker
+                    newWorkflowId = workflowRepository.save(newWorkflow).id
+                    WorkerAssignmentResult.Assigned
+                }
+
+            return if (result == WorkerAssignmentResult.Assigned) {
+                logger.info("Transaction won, setting workflow id to: $newWorkflowId")
+                workflowId = newWorkflowId
+                WorkerAssignmentResult.Assigned
+            } else {
+                result
+            }
+        } catch (e: ObjectOptimisticLockingFailureException) {
+            logger.info("Failed to assign worker, another thread was faster by optimistic locking")
+            return WorkerAssignmentResult.OptimisticLockingFailure
         }
     }
 
-    @Transactional(rollbackFor = [Exception::class])
     fun updateHeartBeat() {
-        val worker =
-            workerRepository.findByIdOrNull(workerId)
-                ?: throw Exception("Worker with id $workerId not found")
+        transactionProvider.newReadWrite {
+            val worker =
+                workerRepository.findByIdOrNull(workerId)
+                    ?: throw Exception("Worker with id $workerId not found")
 
-        worker.expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem().plusSeconds(HEARTBEAT_ADD_SECONDS)
-//        logger.info("Updated expire heartbeat of worker ${worker.hostname} to ${worker.expireHeartBeatAt}")
-        workerRepository.save(worker)
+            worker.expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem().plusSeconds(HEARTBEAT_ADD_SECONDS)
+            workerRepository.save(worker)
+        }
     }
 }

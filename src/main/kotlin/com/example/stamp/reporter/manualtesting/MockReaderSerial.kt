@@ -4,7 +4,7 @@ import com.example.stamp.reporter.domain.messages.ReadStampCode
 import com.example.stamp.reporter.providers.RandomProvider
 import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
-import com.example.stamp.reporter.workflows.workers.WorkerDaemon
+import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -14,7 +14,7 @@ class MockReaderSerial(
     private val randomProvider: RandomProvider,
     private val timeProvider: TimeProvider,
     private val sendToExchangeBroker: SendToExchangeBroker,
-    private val workerDaemon: WorkerDaemon,
+    private val workerStarter: WorkerStarter,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -30,7 +30,7 @@ class MockReaderSerial(
                 idempotencyKey = randomProvider.randomUUID().toString(),
             ),
         )
-        workerDaemon.incrementWork()
+        workerStarter.incrementWork()
         logger.info("Sent to db Serial Event: $input @ $zdt")
     }
 }

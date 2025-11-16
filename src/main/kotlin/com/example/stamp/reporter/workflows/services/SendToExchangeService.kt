@@ -47,7 +47,6 @@ class SendToExchangeService(
         when (result) {
             is WorkflowResult.Success -> {
                 workflowStepRegistry.save(workflowStepId, result)
-                logger.info("SendToExchangeStep1: OK")
             }
             is WorkflowResult.Error -> {
                 workflowStepRegistry.save(workflowStepId, result)

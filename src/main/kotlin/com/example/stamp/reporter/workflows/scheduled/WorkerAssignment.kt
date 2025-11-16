@@ -1,7 +1,7 @@
 package com.example.stamp.reporter.workflows.scheduled
 
-import com.example.stamp.reporter.workflows.workers.WorkerDaemon
 import com.example.stamp.reporter.workflows.workers.WorkerManagement
+import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -18,7 +18,7 @@ sealed class WorkResult {
 @Service
 class WorkerAssignment(
     private val workerManagement: WorkerManagement,
-    private val workerDaemon: WorkerDaemon,
+    private val workerStarter: WorkerStarter,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -26,13 +26,13 @@ class WorkerAssignment(
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorker() {
 //        logger.info("Scheduled Update Worker increment work each 1000ms")
-        workerDaemon.incrementWork()
+        workerStarter.incrementWork()
     }
 
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorkerHeartBeat() {
         try {
-            workerDaemon.updateHeartBeat()
+            workerStarter.updateHeartBeat()
         } catch (e: Exception) {
             logger.error("Failed to update worker heartbeat: ${e.message} exiting hard...", e)
             exitProcess(-1)
@@ -47,6 +47,6 @@ class WorkerAssignment(
     // In the case a poke did not arrive
     @Scheduled(fixedDelay = 2000)
     fun pokeWorker() {
-        workerDaemon.poke()
+        workerStarter.poke()
     }
 }
