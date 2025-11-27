@@ -1,5 +1,7 @@
 # made-funicular-stamp-reporter-kotlin
 A reporter client for communication with the backend
+![logo consisting of the text reporter in an acre](Untitled_Artwork.png)
+
 
 # Local setup
 - Use docker to start postgres and kafka. Postgres is persistent using a volume, Kafka can be configured to be. See docker-compose.yml
