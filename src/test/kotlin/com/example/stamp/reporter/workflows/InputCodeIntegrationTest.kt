@@ -38,6 +38,9 @@ class InputCodeIntegrationTest(
 
     @Test
     fun `Stamp code is read and published to exchange`() {
+        val slot = slot<StampCodeRequest>()
+        every { stampServerApi.postStampCode(capture(slot), any()) } just Runs
+
         val input = randomProvider.randomString(1)
         val zdt = timeProvider.zonedDateTimeNowSystem()
         val idempotencyKey = randomProvider.randomUUID().toString()
@@ -49,9 +52,6 @@ class InputCodeIntegrationTest(
             ),
         )
         workerStarter.incrementWork()
-
-        val slot = slot<StampCodeRequest>()
-        every { stampServerApi.postStampCode(capture(slot), any()) } just Runs
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted {
             verify { stampServerApi.postStampCode(any(), idempotencyKey) }
