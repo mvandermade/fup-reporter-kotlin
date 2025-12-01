@@ -9,7 +9,6 @@ import com.example.stamp.reporter.workflows.services.SendToExchangeService
 import com.example.stamp.reporter.workflows.services.WorkflowService
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.event.ApplicationReadyEvent
-import org.springframework.context.annotation.Profile
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.TaskExecutor
@@ -21,7 +20,6 @@ import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 
 @Service
-@Profile("!test")
 class WorkerStarter(
     @param:Qualifier("applicationTaskExecutor") private val taskExecutor: TaskExecutor,
     private val workflowRepository: WorkflowRepository,

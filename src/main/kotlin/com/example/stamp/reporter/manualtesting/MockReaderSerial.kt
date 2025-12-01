@@ -6,10 +6,12 @@ import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 @Service
+@Profile("!test")
 class MockReaderSerial(
     private val randomProvider: RandomProvider,
     private val timeProvider: TimeProvider,

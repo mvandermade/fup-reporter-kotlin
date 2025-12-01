@@ -9,6 +9,7 @@ import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Profile
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Scheduled
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
+@Profile("!test")
 class IOBalancerReader(
     private val ioBalancerStub: BalancerSvcGrpc.BalancerSvcBlockingV2Stub,
     private val timeProvider: TimeProvider,

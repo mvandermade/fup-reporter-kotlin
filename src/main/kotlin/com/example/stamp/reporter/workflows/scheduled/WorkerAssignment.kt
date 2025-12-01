@@ -29,7 +29,7 @@ class WorkerAssignment(
         workerStarter.incrementWork()
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 1000, initialDelay = 5000)
     fun scheduledUpdateWorkerHeartBeat() {
         try {
             workerStarter.updateHeartBeat()

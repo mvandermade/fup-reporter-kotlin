@@ -50,6 +50,8 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
     testImplementation("org.testcontainers:postgresql:1.21.3")
     testImplementation("org.springframework.grpc:spring-grpc-test")
+    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("com.ninja-squad:springmockk:5.0.1")
 }
 
 dependencyManagement {
