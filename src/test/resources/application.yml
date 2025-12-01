@@ -1,9 +1,4 @@
 spring:
-  datasource:
-    hikari:
-      username: postgres
-      password: password
-    url: jdbc:postgresql://localhost:5432/stamp_reporter
   jpa:
     hibernate:
       ddl-auto: validate
@@ -15,7 +10,7 @@ spring:
 application:
   api-callers:
     stamp-server:
-      url: http://localhost:8881
+      url: http://
   grpc:
     client:
       channels:

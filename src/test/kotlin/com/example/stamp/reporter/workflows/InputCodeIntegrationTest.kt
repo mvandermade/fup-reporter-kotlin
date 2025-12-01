@@ -5,6 +5,7 @@ import com.example.stamp.reporter.domain.messages.ReadStampCode
 import com.example.stamp.reporter.domain.requests.StampCodeRequest
 import com.example.stamp.reporter.providers.RandomProvider
 import com.example.stamp.reporter.providers.TimeProvider
+import com.example.stamp.reporter.testutils.startPostgresContainer
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import com.ninjasquad.springmockk.MockkBean
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
+import org.testcontainers.junit.jupiter.Container
 import java.time.Duration
 
 @SpringBootTest(
@@ -56,5 +59,12 @@ class InputCodeIntegrationTest(
 
         assertThat(slot.captured.code).isEqualTo(input)
         assertThat(slot.captured.readAt).isEqualTo(zdt)
+    }
+
+    companion object {
+        @Container
+        @ServiceConnection
+        @Suppress("unused")
+        val postgresContainer = startPostgresContainer()
     }
 }

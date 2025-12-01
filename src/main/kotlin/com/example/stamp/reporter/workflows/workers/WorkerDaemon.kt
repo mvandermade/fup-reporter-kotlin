@@ -187,13 +187,18 @@ class WorkerDaemon(
             val result =
                 transactionProvider.newReadWrite {
                     if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
-                    val newWorkflow =
-                        workflowRepository.findFirstByWorkerIsNull()
-                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
 
                     val worker = workerRepository.getReferenceById(workerId)
-                    newWorkflow.worker = worker
-                    newWorkflowId = workflowRepository.save(newWorkflow).id
+                    val updatedCount = workflowRepository.assignNextWorkflowToWorker(worker)
+
+                    if (updatedCount == 0) {
+                        return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
+                    }
+
+                    newWorkflowId =
+                        workflowRepository.findByWorkerId(workerId)?.id
+                            ?: throw IllegalStateException("Workflow assigned but not found")
+
                     WorkerAssignmentResult.Assigned
                 }
 
