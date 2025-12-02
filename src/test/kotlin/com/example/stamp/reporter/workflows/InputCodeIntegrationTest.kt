@@ -9,9 +9,7 @@ import com.example.stamp.reporter.testutils.startPostgresContainer
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import com.ninjasquad.springmockk.MockkBean
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
@@ -38,7 +36,7 @@ class InputCodeIntegrationTest(
     @Test
     fun `Stamp code is read and published to exchange`() {
         val slot = slot<StampCodeRequest>()
-        every { stampServerApi.postStampCode(capture(slot), any()) } just Runs
+        every { stampServerApi.postStampCode(capture(slot), any()) } returns Unit
 
         val input = randomProvider.randomString(1)
         val zdt = timeProvider.zonedDateTimeNowSystem()
