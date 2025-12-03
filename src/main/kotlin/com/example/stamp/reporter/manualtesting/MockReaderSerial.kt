@@ -20,7 +20,7 @@ class MockReaderSerial(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(fixedDelay = 20)
     fun scanPostZegel() {
         val input = randomProvider.randomString(1)
         val zdt = timeProvider.zonedDateTimeNowSystem()

@@ -52,7 +52,7 @@ class WorkerDaemon(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private var workerId by Delegates.notNull<Long>()
+    var workerId by Delegates.notNull<Long>()
 
     init {
         workerId =
@@ -61,7 +61,7 @@ class WorkerDaemon(
                     .save(
                         Worker(
                             hostname = "localhost",
-                            expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem(),
+                            expireHeartBeatAt = timeProvider.offsetDateTimeNowSystem().plusSeconds(HEARTBEAT_ADD_SECONDS),
                         ),
                     ).id
             } catch (e: Exception) {
@@ -83,9 +83,12 @@ class WorkerDaemon(
                             // Because of the condition no thread race to doWork is possible.
                             WorkerAssignmentResult.Assigned -> {
                                 doWork()
+                                // Keep the loop going
+                                queueDepthCounter.incrementAndGet()
                             }
                             WorkerAssignmentResult.WorkerAlreadyAssigned -> {
                                 doWork()
+                                queueDepthCounter.incrementAndGet()
                             }
                             WorkerAssignmentResult.NoWorkflowFound -> {}
                             WorkerAssignmentResult.OptimisticLockingFailure -> {}
@@ -145,7 +148,14 @@ class WorkerDaemon(
 
         val workflowStep =
             workflowStepRepository.findFirstByWorkflowIdAndStepNumber(localWorkflowId, workflow.programCounter)
-                ?: return logger.info("WorkflowStep with step ${workflow.programCounter} not found for workflowId $localWorkflowId")
+
+        if (workflowStep == null) {
+            workflowService.markError(localWorkflowId)
+            return logger.info(
+                "Worker $workerId: WorkflowStep not found with step ${workflow.programCounter} " +
+                    "for workflowId $localWorkflowId - marked as error",
+            )
+        }
 
         when (workflow.type) {
             WorkflowType.SEND_TO_EXCHANGE -> {
@@ -188,16 +198,13 @@ class WorkerDaemon(
                 transactionProvider.newReadWrite {
                     if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
 
+                    val newWorkflow =
+                        workflowRepository.findFirstByWorkerIsNull()
+                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
                     val worker = workerRepository.getReferenceById(workerId)
-                    val updatedCount = workflowRepository.assignNextWorkflowToWorker(worker)
 
-                    if (updatedCount == 0) {
-                        return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
-                    }
-
-                    newWorkflowId =
-                        workflowRepository.findByWorkerId(workerId)?.id
-                            ?: throw IllegalStateException("Workflow assigned but not found")
+                    newWorkflow.worker = worker
+                    newWorkflowId = workflowRepository.save(newWorkflow).id
 
                     WorkerAssignmentResult.Assigned
                 }

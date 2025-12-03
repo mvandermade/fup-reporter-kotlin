@@ -7,6 +7,7 @@ import com.example.stamp.reporter.workflows.repositories.WorkflowRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowStepRepository
 import com.example.stamp.reporter.workflows.services.SendToExchangeService
 import com.example.stamp.reporter.workflows.services.WorkflowService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.ContextClosedEvent
@@ -40,6 +41,8 @@ class WorkerStarter(
 
     private lateinit var workerDaemon1: WorkerDaemon
     private lateinit var workerDaemon2: WorkerDaemon
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     @EventListener(ApplicationReadyEvent::class)
     fun startWakeUpListener() {

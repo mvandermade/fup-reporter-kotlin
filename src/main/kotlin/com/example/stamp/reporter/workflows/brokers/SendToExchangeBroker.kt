@@ -48,10 +48,10 @@ class SendToExchangeBroker(
     }
 
     @Transactional(rollbackFor = [Exception::class])
-    fun finalize(
+    fun nextStepNumberIs(
         workflow: Workflow,
         workflowStepId: Long,
-    ) {
+    ): Int {
         val workflowStep =
             workflowStepRepository.findByIdOrNull(workflowStepId)
                 ?: throw Exception("Workflow step with id $workflowStepId not found")
@@ -67,6 +67,7 @@ class SendToExchangeBroker(
                         callback = StepCallbackType.TAKE_NEXT,
                     ),
                 )
+                return workflow.programCounter + 1
             }
             2 -> {
                 workflowStepRepository.save(
@@ -78,7 +79,9 @@ class SendToExchangeBroker(
                         callback = StepCallbackType.TOMBSTONE,
                     ),
                 )
+                return workflow.programCounter + 1
             }
+            else -> throw Exception("Invalid program counter: ${workflow.programCounter}")
         }
     }
 }
