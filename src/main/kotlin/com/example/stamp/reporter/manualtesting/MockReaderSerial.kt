@@ -24,7 +24,7 @@ class MockReaderSerial(
     fun scanPostZegel() {
         val input = randomProvider.randomString(1)
         val zdt = timeProvider.zonedDateTimeNowSystem()
-        logger.info("Read Serial Event: $input @ $zdt")
+        logger.trace("Mock Serial Event: {} @ {}", input, zdt)
         sendToExchangeBroker.save(
             ReadStampCode(
                 readAt = zdt,
@@ -33,6 +33,5 @@ class MockReaderSerial(
             ),
         )
         workerStarter.incrementWork()
-        logger.info("Sent to db Serial Event: $input @ $zdt")
     }
 }

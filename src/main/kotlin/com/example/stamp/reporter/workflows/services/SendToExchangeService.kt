@@ -50,7 +50,7 @@ class SendToExchangeService(
             }
             is WorkflowResult.Error -> {
                 workflowStepRegistry.save(workflowStepId, result)
-                logger.info("SendToExchangeStep1: NOK stepId: $workflowStepId, message: ${result.message}")
+                logger.trace("SendToExchangeStep1: NOK stepId: $workflowStepId, message: ${result.message}")
             }
         }
 
@@ -61,7 +61,7 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.info("Sending to users read input: $readStampCode")
+            logger.trace("Sending to users read input: $readStampCode")
             trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send read input to users: ${e.message}")
@@ -73,7 +73,7 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.info("Received input to send to exchange: $readStampCode")
+            logger.trace("Received input to send to exchange: $readStampCode")
 
             val time =
                 measureTime {
@@ -82,7 +82,8 @@ class SendToExchangeService(
                         readStampCode.idempotencyKey,
                     )
                 }
-            logger.info("Sent stamp code to exchange in $time")
+            Thread.sleep(1000)
+            logger.info("sendToExchange step took $time")
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send stamp code to exchange: ${e.message}")
         }
@@ -93,7 +94,7 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.info("Sending to users ack: $readStampCode")
+            logger.trace("Sending to users ack: $readStampCode")
             trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send ack to users: ${e.message}")

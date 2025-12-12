@@ -18,7 +18,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.properties.Delegates
 import kotlin.system.exitProcess
@@ -45,12 +44,13 @@ class WorkerDaemon(
     private val workerRepository: WorkerRepository,
     private val timeProvider: TimeProvider,
     private val transactionProvider: TransactionProvider,
-    private val lock: ReentrantLock,
-    private val wakeUpCondition: Condition,
-    private val queueDepthCounter: AtomicLong,
     private val isShuttingDown: AtomicBoolean,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
+
+    private val lock = ReentrantLock(true)
+    private val queueDepthCounter = AtomicLong(0)
+    private val wakeUpCondition = lock.newCondition()
 
     var workerId by Delegates.notNull<Long>()
 
@@ -68,6 +68,23 @@ class WorkerDaemon(
                 logger.error("Failed to save worker: ${e.message}")
                 exitProcess(-1)
             }
+    }
+
+    fun poke() {
+        val acquired = lock.tryLock(0, TimeUnit.MILLISECONDS)
+        // Loop is already running, no need to wake it up
+        if (!acquired) return
+
+        try {
+            wakeUpCondition.signal()
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    fun incrementWork() {
+        queueDepthCounter.incrementAndGet()
+        poke()
     }
 
     fun awaitWakeUp() {
@@ -112,12 +129,12 @@ class WorkerDaemon(
 
             WorkResult.Success -> {
                 val duration = System.currentTimeMillis() - time
-                logger.info("Successfully processed a doWork(), took $duration ms")
+                logger.trace("Successfully processed a doWork(), took $duration ms")
             }
 
             WorkResult.Failure -> {
                 val duration = System.currentTimeMillis() - time
-                logger.info("Failed to process a doWork(), took $duration ms")
+                logger.trace("Failed to process a doWork(), took $duration ms")
             }
         }
     }
@@ -151,7 +168,7 @@ class WorkerDaemon(
 
         if (workflowStep == null) {
             workflowService.markError(localWorkflowId)
-            return logger.info(
+            return logger.trace(
                 "Worker $workerId: WorkflowStep not found with step ${workflow.programCounter} " +
                     "for workflowId $localWorkflowId - marked as error",
             )
@@ -159,7 +176,7 @@ class WorkerDaemon(
 
         when (workflow.type) {
             WorkflowType.SEND_TO_EXCHANGE -> {
-                logger.info("Processing workflow $workflowId of type SEND_TO_EXCHANGE programCounter: ${workflow.programCounter}")
+                logger.trace("Processing workflow $workflowId of type SEND_TO_EXCHANGE programCounter: ${workflow.programCounter}")
                 val result = sendToExchangeService.doNext(workflowStep.id, workflow.programCounter, workflowStep.input)
                 when (result) {
                     is WorkflowResult.Success -> {
@@ -210,14 +227,15 @@ class WorkerDaemon(
                 }
 
             return if (result == WorkerAssignmentResult.Assigned) {
-                logger.info("Transaction won, setting workflow id to: $newWorkflowId")
+                logger.info("[Assigned] setting worker $workerId workflowId to: $newWorkflowId")
                 workflowId = newWorkflowId
                 WorkerAssignmentResult.Assigned
             } else {
+                logger.info("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
                 result
             }
-        } catch (e: ObjectOptimisticLockingFailureException) {
-            logger.info("Failed to assign worker, another thread was faster by optimistic locking")
+        } catch (_: ObjectOptimisticLockingFailureException) {
+            logger.info("[NotAssigned] another worker optimistically locked workerId $workerId")
             return WorkerAssignmentResult.OptimisticLockingFailure
         }
     }

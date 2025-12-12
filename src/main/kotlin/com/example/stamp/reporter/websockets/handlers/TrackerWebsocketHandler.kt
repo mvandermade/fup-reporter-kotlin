@@ -47,7 +47,7 @@ class TrackerWebsocketHandler : TextWebSocketHandler() {
     }
 
     fun sendAll(message: WebSocketClientMessage) {
-        logger.info("Sending event: $message to ${webSockerClientList.size} clients")
+        logger.trace("Sending event: {} to {} clients", message, webSockerClientList.size)
         webSockerClientList.forEach {
             sendEvent(it, message)
         }

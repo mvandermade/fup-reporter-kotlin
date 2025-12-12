@@ -43,7 +43,7 @@ class IOBalancerReader(
             val assignment = work.read()
 
             val zdt = timeProvider.zonedDateTimeNowSystem()
-            logger.info("Read IO balanced Event: ${assignment.postzegelCode} @ $zdt")
+            logger.trace("Read IO balanced Event: {} @ {}", assignment.postzegelCode, zdt)
 
             sendToExchangeBroker.save(
                 ReadStampCode(
@@ -56,7 +56,7 @@ class IOBalancerReader(
             // TODO
             // Post it
 
-            logger.info("Read Serial Event from gRPC: ${assignment.postzegelCode}")
+            logger.trace("Read Serial Event from gRPC: ${assignment.postzegelCode}")
             trackerWebsocketHandler.sendAll(WebSocketSerialEventMessage(code = assignment.postzegelCode))
 
             val ack =

@@ -36,7 +36,7 @@ class WorkflowService(
         workflowStepId: Long,
         callbackType: StepCallbackType,
     ) {
-        logger.info("Marking workflow step $workflowStepId as $callbackType")
+        logger.trace("Marking workflow step {} as {}", workflowStepId, callbackType)
         val workflow =
             workflowRepository.findByIdOrNull(workflowId)
                 ?: throw IllegalArgumentException("Workflow with ID $workflowId not found markSuccess")
@@ -44,12 +44,12 @@ class WorkflowService(
         when (callbackType) {
             StepCallbackType.TAKE_NEXT -> {
                 val nextStepNumber = sendToExchangeBroker.nextStepNumberIs(workflow, workflowStepId)
-                logger.info("Finished step ${workflow.programCounter}, next step is $nextStepNumber")
+                logger.trace("Finished step ${workflow.programCounter}, next step is $nextStepNumber")
                 workflow.programCounter = nextStepNumber
                 workflowRepository.save(workflow)
             }
             StepCallbackType.TOMBSTONE -> {
-                logger.info("Marking workflow $workflowId as tombstone")
+                logger.trace("Marking workflow $workflowId as tombstone")
                 markTombstone(workflow)
             }
         }
