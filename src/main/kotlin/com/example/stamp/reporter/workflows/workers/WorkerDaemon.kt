@@ -22,8 +22,8 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.properties.Delegates
 import kotlin.system.exitProcess
 
-// Keep this small its only job is to wake up the worker
-const val AWAIT_WAKEUP_TIMEOUT_MS = 1000L
+// Keep this small; its only job is to wake up the worker
+private const val AWAIT_WAKEUP_TIMEOUT_MS = 1000L
 private const val HEARTBEAT_ADD_SECONDS = 60L
 
 sealed class WorkerAssignmentResult {
@@ -93,25 +93,26 @@ class WorkerDaemon(
                 lock.lock()
                 // Important to give a timeout because otherwise the application cannot shut down gracefully
                 wakeUpCondition.await(AWAIT_WAKEUP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                if (queueDepthCounter.get() > 0 && !isShuttingDown.get()) {
-                    var queueLine = queueDepthCounter.get()
-                    while (queueLine > 0) {
-                        // Stop the queue depth counter when application wants to quit
-                        if (isShuttingDown.get()) break
-                        queueLine = 0
-                        queueDepthCounter.set(0)
-                        when (assignWorker()) {
-                            // Because of the condition no thread race to doWork is possible.
-                            WorkerAssignmentResult.Assigned -> {
-                                doWork()
-                                queueLine = queueDepthCounter.incrementAndGet()
-                            }
-                            WorkerAssignmentResult.WorkerAlreadyAssigned -> {
-                                doWork()
-                                queueLine = queueDepthCounter.incrementAndGet()
-                            }
-                            WorkerAssignmentResult.NoWorkflowFound -> {}
-                            WorkerAssignmentResult.OptimisticLockingFailure -> {}
+
+                if (isShuttingDown.get()) continue
+                if (queueDepthCounter.get() <= 0) continue
+
+                var queueLine = queueDepthCounter.get()
+                while (queueLine > 0 && !isShuttingDown.get()) {
+                    // Reset queue depth; `doWork` may add more
+                    queueDepthCounter.set(0)
+                    when (assignWorker()) {
+                        // Because of the condition no thread race to doWork is possible.
+                        WorkerAssignmentResult.Assigned,
+                        WorkerAssignmentResult.WorkerAlreadyAssigned,
+                        -> {
+                            doWork()
+                            queueLine = queueDepthCounter.incrementAndGet()
+                        }
+                        WorkerAssignmentResult.NoWorkflowFound,
+                        WorkerAssignmentResult.OptimisticLockingFailure,
+                        -> {
+                            queueLine = 0
                         }
                     }
                 }
@@ -186,12 +187,13 @@ class WorkerDaemon(
                         workflowService.markSuccess(localWorkflowId, workflowStep.id, workflowStep.callback)
                         when (workflowStep.callback) {
                             StepCallbackType.TOMBSTONE -> {
-                                try {
-                                    if (workflowIdLock.tryLock(1000, TimeUnit.MILLISECONDS)) {
+                                val acquired = workflowIdLock.tryLock(1000, TimeUnit.MILLISECONDS)
+                                if (acquired) {
+                                    try {
                                         workflowId = null
+                                    } finally {
+                                        workflowIdLock.unlock()
                                     }
-                                } finally {
-                                    workflowIdLock.unlock()
                                 }
                             }
 

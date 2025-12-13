@@ -16,7 +16,6 @@ import org.springframework.context.event.EventListener
 import org.springframework.core.task.TaskExecutor
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.collections.get
 
 @Service
 class WorkerStarter(
@@ -37,14 +36,9 @@ class WorkerStarter(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     init {
-        for (i in 0 until numberOfWorkers) {
+        repeat(numberOfWorkers) {
             val worker = newWorkerDaemon(appIsShuttingDown)
-            val workerContext =
-                WorkerContext(
-                    isShuttingDown = appIsShuttingDown,
-                    worker = worker,
-                )
-
+            val workerContext = WorkerContext(isShuttingDown = appIsShuttingDown, worker = worker)
             workerContexts.add(workerContext)
         }
     }
