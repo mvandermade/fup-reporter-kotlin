@@ -1,4 +1,4 @@
-package com.example.stamp.reporter.domain
+package com.example.stamp.reporter.domain.requests
 
 import java.time.ZonedDateTime
 

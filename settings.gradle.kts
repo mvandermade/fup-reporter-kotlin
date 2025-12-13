@@ -1,1 +1,1 @@
-rootProject.name = "made-funicular-stamp-reporter-kotlin"
+rootProject.name = "fup-reporter-kotlin"

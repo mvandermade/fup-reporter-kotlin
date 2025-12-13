@@ -3,7 +3,6 @@ name: Lint Build Test Gradle project
 on:
   workflow_dispatch:
   push:
-  pull_request:
 
 jobs:
   lint-build-test-gradle-project:
@@ -14,15 +13,9 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Setup Gradle for caching benefits
-        uses: gradle/actions/setup-gradle@v3          
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
-      - name: Lint with ktLint
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          arguments: ktlintCheck
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+      - name: Lint with ktlint
+        run: ./gradlew ktlintCheck
       - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          arguments: build --info
+        run: ./gradlew build
