@@ -31,7 +31,7 @@ class IOBalancerReader(
 
     @EventListener(ContextClosedEvent::class)
     fun onContextClosedEvent(contextClosedEvent: ContextClosedEvent) {
-        println("ContextClosedEvent occurred at millis: " + contextClosedEvent.getTimestamp())
+        logger.warn("ContextClosedEvent occurred at millis: " + contextClosedEvent.timestamp)
         isShuttingDown.set(true)
     }
 

@@ -5,7 +5,6 @@ import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import kotlin.system.exitProcess
 
 sealed class WorkResult {
     object WorkerBusy : WorkResult()
@@ -34,8 +33,7 @@ class WorkerAssignment(
         try {
             workerStarter.updateHeartBeat()
         } catch (e: Exception) {
-            logger.error("Failed to update worker heartbeat: ${e.message} exiting hard...", e)
-            exitProcess(-1)
+            logger.error("Failed to update worker heartbeat: ${e.message}...", e)
         }
     }
 

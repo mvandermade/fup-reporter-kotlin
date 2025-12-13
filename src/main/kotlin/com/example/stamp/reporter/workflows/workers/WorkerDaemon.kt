@@ -93,19 +93,22 @@ class WorkerDaemon(
                 lock.lock()
                 // Important to give a timeout because otherwise the application cannot shut down gracefully
                 wakeUpCondition.await(AWAIT_WAKEUP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-                if (queueDepthCounter.get() > 0) {
-                    for (i in 0..<queueDepthCounter.get()) {
-                        queueDepthCounter.decrementAndGet()
+                if (queueDepthCounter.get() > 0 && !isShuttingDown.get()) {
+                    var queueLine = queueDepthCounter.get()
+                    while (queueLine > 0) {
+                        // Stop the queue depth counter when application wants to quit
+                        if (isShuttingDown.get()) break
+                        queueLine = 0
+                        queueDepthCounter.set(0)
                         when (assignWorker()) {
                             // Because of the condition no thread race to doWork is possible.
                             WorkerAssignmentResult.Assigned -> {
                                 doWork()
-                                // Keep the loop going
-                                queueDepthCounter.incrementAndGet()
+                                queueLine = queueDepthCounter.incrementAndGet()
                             }
                             WorkerAssignmentResult.WorkerAlreadyAssigned -> {
                                 doWork()
-                                queueDepthCounter.incrementAndGet()
+                                queueLine = queueDepthCounter.incrementAndGet()
                             }
                             WorkerAssignmentResult.NoWorkflowFound -> {}
                             WorkerAssignmentResult.OptimisticLockingFailure -> {}
@@ -216,7 +219,7 @@ class WorkerDaemon(
                     if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
 
                     val newWorkflow =
-                        workflowRepository.findFirstByWorkerIsNull()
+                        workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
                             ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
                     val worker = workerRepository.getReferenceById(workerId)
 
@@ -231,11 +234,11 @@ class WorkerDaemon(
                 workflowId = newWorkflowId
                 WorkerAssignmentResult.Assigned
             } else {
-                logger.info("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
+                logger.trace("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
                 result
             }
         } catch (_: ObjectOptimisticLockingFailureException) {
-            logger.info("[NotAssigned] another worker optimistically locked workerId $workerId")
+            logger.trace("[NotAssigned] another worker optimistically locked workerId $workerId")
             return WorkerAssignmentResult.OptimisticLockingFailure
         }
     }

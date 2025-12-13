@@ -9,6 +9,7 @@ import com.example.stamp.reporter.workflows.services.SendToExchangeService
 import com.example.stamp.reporter.workflows.services.WorkflowService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
@@ -27,9 +28,10 @@ class WorkerStarter(
     private val workerRepository: WorkerRepository,
     private val timeProvider: TimeProvider,
     private val transactionProvider: TransactionProvider,
+    @param:Value($$"${application.workers.amount:5}")
+    private val numberOfWorkers: Int,
 ) {
     private val workerContexts = mutableListOf<WorkerContext>()
-    private val numberOfWorkers = 20
 
     private val appIsShuttingDown = AtomicBoolean(false)
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -59,7 +61,9 @@ class WorkerStarter(
 
     @EventListener(ContextClosedEvent::class)
     fun onContextClosedEvent(contextClosedEvent: ContextClosedEvent) {
-        println("ContextClosedEvent occurred at millis: " + contextClosedEvent.getTimestamp())
+        logger.warn(
+            "ContextClosedEvent occurred at millis, notifying appIsShuttingDown ${contextClosedEvent.timestamp}",
+        )
         appIsShuttingDown.set(true)
     }
 

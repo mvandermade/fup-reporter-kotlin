@@ -73,7 +73,7 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.trace("Received input to send to exchange: $readStampCode")
+            logger.trace("Received input to send to exchange: {}", readStampCode)
 
             val time =
                 measureTime {
@@ -82,7 +82,6 @@ class SendToExchangeService(
                         readStampCode.idempotencyKey,
                     )
                 }
-            Thread.sleep(1000)
             logger.info("sendToExchange step took $time")
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send stamp code to exchange: ${e.message}")
