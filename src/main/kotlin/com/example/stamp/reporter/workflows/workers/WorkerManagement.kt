@@ -23,8 +23,11 @@ class WorkerManagement(
                 workerRepository.findFirstByExpireHeartBeatAtBefore(offsetDateTimeNow)
                     ?: return
             logger.info(
-                "Cleaning up worker: ${expiredWorker.id} - ${expiredWorker.hostname}. Time now = $offsetDateTimeNow, " +
-                    "expire heartbeat of the expired worker = ${expiredWorker.expireHeartBeatAt}",
+                "Cleaning up worker: {} - {}. Time now = {}, expire heartbeat of the expired worker = {}",
+                expiredWorker.id,
+                expiredWorker.hostname,
+                offsetDateTimeNow,
+                expiredWorker.expireHeartBeatAt,
             )
             // Clean up any reserved workflows first in transaction
             workflowRepository.findAllByWorkerIdIs(expiredWorker.id).forEach { workflow ->

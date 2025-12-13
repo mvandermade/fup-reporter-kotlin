@@ -10,8 +10,8 @@ import com.example.stamp.reporter.workflows.repositories.WorkerRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowStepRepository
 import com.example.stamp.reporter.workflows.scheduled.WorkResult
-import com.example.stamp.reporter.workflows.services.SendToExchangeService
 import com.example.stamp.reporter.workflows.services.WorkflowService
+import com.example.stamp.reporter.workflows.steppers.SendToExchangeStepper
 import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.orm.ObjectOptimisticLockingFailureException
@@ -39,7 +39,7 @@ sealed class WorkerAssignmentResult {
 class WorkerDaemon(
     private val workflowRepository: WorkflowRepository,
     private val workflowStepRepository: WorkflowStepRepository,
-    private val sendToExchangeService: SendToExchangeService,
+    private val sendToExchangeStepper: SendToExchangeStepper,
     private val workflowService: WorkflowService,
     private val workerRepository: WorkerRepository,
     private val timeProvider: TimeProvider,
@@ -51,6 +51,8 @@ class WorkerDaemon(
     private val lock = ReentrantLock(true)
     private val queueDepthCounter = AtomicLong(0)
     private val wakeUpCondition = lock.newCondition()
+    private var workflowId: Long? = null
+    private val workflowIdLock = ReentrantLock(true)
 
     var workerId by Delegates.notNull<Long>()
 
@@ -93,34 +95,69 @@ class WorkerDaemon(
                 lock.lock()
                 // Important to give a timeout because otherwise the application cannot shut down gracefully
                 wakeUpCondition.await(AWAIT_WAKEUP_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-
-                if (isShuttingDown.get()) continue
-                if (queueDepthCounter.get() <= 0) continue
-
-                var queueLine = queueDepthCounter.get()
-                while (queueLine > 0 && !isShuttingDown.get()) {
-                    // Reset queue depth; `doWork` may add more
-                    queueDepthCounter.set(0)
-                    when (assignWorker()) {
-                        // Because of the condition no thread race to doWork is possible.
-                        WorkerAssignmentResult.Assigned,
-                        WorkerAssignmentResult.WorkerAlreadyAssigned,
-                        -> {
-                            doWork()
-                            queueLine = queueDepthCounter.incrementAndGet()
-                        }
-                        WorkerAssignmentResult.NoWorkflowFound,
-                        WorkerAssignmentResult.OptimisticLockingFailure,
-                        -> {
-                            queueLine = 0
-                        }
-                    }
-                }
+                if (isShuttingDown.get()) break
+                beAwake()
             } catch (e: Exception) {
                 logger.error("Failed to wait for wakeup", e)
             } finally {
                 lock.unlock()
             }
+        }
+    }
+
+    private fun beAwake() {
+        if (queueDepthCounter.get() <= 0) {
+            queueDepthCounter.set(0)
+            return
+        }
+        queueDepthCounter.set(0)
+
+        while (!isShuttingDown.get()) {
+            when (obtainWorkflow()) {
+                WorkerAssignmentResult.Assigned,
+                WorkerAssignmentResult.WorkerAlreadyAssigned,
+                -> {
+                    doWork()
+                    continue
+                }
+                WorkerAssignmentResult.NoWorkflowFound,
+                WorkerAssignmentResult.OptimisticLockingFailure,
+                -> {
+                    break
+                }
+            }
+        }
+    }
+
+    fun obtainWorkflow(): WorkerAssignmentResult {
+        var newWorkflowId: Long? = null
+        try {
+            val result =
+                transactionProvider.newReadWrite {
+                    if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
+
+                    val newWorkflow =
+                        workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
+                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
+                    val worker = workerRepository.getReferenceById(workerId)
+
+                    newWorkflow.worker = worker
+                    newWorkflowId = workflowRepository.save(newWorkflow).id
+
+                    WorkerAssignmentResult.Assigned
+                }
+
+            return if (result == WorkerAssignmentResult.Assigned) {
+                logger.trace("[Assigned] setting worker $workerId workflowId to: $newWorkflowId")
+                workflowId = newWorkflowId
+                WorkerAssignmentResult.Assigned
+            } else {
+                logger.trace("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
+                result
+            }
+        } catch (_: ObjectOptimisticLockingFailureException) {
+            logger.trace("[NotAssigned] another worker optimistically locked workerId $workerId")
+            return WorkerAssignmentResult.OptimisticLockingFailure
         }
     }
 
@@ -138,7 +175,7 @@ class WorkerDaemon(
 
             WorkResult.Failure -> {
                 val duration = System.currentTimeMillis() - time
-                logger.trace("Failed to process a doWork(), took $duration ms")
+                logger.info("Failed to process a doWork(), took $duration ms")
             }
         }
     }
@@ -162,7 +199,7 @@ class WorkerDaemon(
         val localWorkflowId = workflowId ?: return
         val workflow = workflowRepository.findByIdOrNull(localWorkflowId)
         if (workflow == null) {
-            logger.info("Workflow with id $localWorkflowId not found, possibly tombstoned or errored out, resetting worker")
+            logger.trace("Workflow with id $localWorkflowId not found, possibly tombstoned or errored out, resetting worker")
             workflowId = null
             return
         }
@@ -181,7 +218,7 @@ class WorkerDaemon(
         when (workflow.type) {
             WorkflowType.SEND_TO_EXCHANGE -> {
                 logger.trace("Processing workflow $workflowId of type SEND_TO_EXCHANGE programCounter: ${workflow.programCounter}")
-                val result = sendToExchangeService.doNext(workflowStep.id, workflow.programCounter, workflowStep.input)
+                val result = sendToExchangeStepper.doNext(workflowStep.id, workflow.programCounter, workflowStep.input)
                 when (result) {
                     is WorkflowResult.Success -> {
                         workflowService.markSuccess(localWorkflowId, workflowStep.id, workflowStep.callback)
@@ -205,43 +242,6 @@ class WorkerDaemon(
                     is WorkflowResult.Error -> workflowService.markError(localWorkflowId)
                 }
             }
-        }
-    }
-
-    var workflowId: Long? = null
-
-    // Prevent thread racing and use it as a queue
-    val workflowIdLock = ReentrantLock(true)
-
-    fun assignWorker(): WorkerAssignmentResult {
-        var newWorkflowId: Long? = null
-        try {
-            val result =
-                transactionProvider.newReadWrite {
-                    if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
-
-                    val newWorkflow =
-                        workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
-                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
-                    val worker = workerRepository.getReferenceById(workerId)
-
-                    newWorkflow.worker = worker
-                    newWorkflowId = workflowRepository.save(newWorkflow).id
-
-                    WorkerAssignmentResult.Assigned
-                }
-
-            return if (result == WorkerAssignmentResult.Assigned) {
-                logger.info("[Assigned] setting worker $workerId workflowId to: $newWorkflowId")
-                workflowId = newWorkflowId
-                WorkerAssignmentResult.Assigned
-            } else {
-                logger.trace("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
-                result
-            }
-        } catch (_: ObjectOptimisticLockingFailureException) {
-            logger.trace("[NotAssigned] another worker optimistically locked workerId $workerId")
-            return WorkerAssignmentResult.OptimisticLockingFailure
         }
     }
 

@@ -21,14 +21,14 @@ class WorkerAssignment(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    // Every second make sure the worker picks something up if it's idling
+    // Every second makes sure the worker picks something up if it's idling
     @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorker() {
         logger.trace("Scheduled Update Worker increment work each 1000ms")
         workerStarter.incrementWork()
     }
 
-    @Scheduled(fixedDelay = 1000, initialDelay = 5000)
+    @Scheduled(fixedDelay = 1000)
     fun scheduledUpdateWorkerHeartBeat() {
         try {
             workerStarter.updateHeartBeat()

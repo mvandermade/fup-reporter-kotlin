@@ -1,9 +1,7 @@
-package com.example.stamp.reporter.workflows.services
+package com.example.stamp.reporter.workflows.steppers
 
 import com.example.stamp.reporter.apicallers.feign.StampServerApi
 import com.example.stamp.reporter.domain.messages.ReadStampCode
-import com.example.stamp.reporter.websockets.domain.WebSocketAckExchangeMessage
-import com.example.stamp.reporter.websockets.domain.WebSocketPostExchangeMessage
 import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.example.stamp.reporter.workflows.domain.WorkflowResult
 import com.example.stamp.reporter.workflows.mappers.StampCodeMapper
@@ -17,7 +15,7 @@ import org.springframework.stereotype.Service
 import kotlin.time.measureTime
 
 @Service
-class SendToExchangeService(
+class SendToExchangeStepper(
     private val stampServerApi: StampServerApi,
     private val stampCodeMapper: StampCodeMapper,
     private val trackerWebsocketHandler: TrackerWebsocketHandler,
@@ -61,8 +59,8 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.trace("Sending to users read input: $readStampCode")
-            trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
+            logger.trace("Sending to users read input: {}", readStampCode)
+            // trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send read input to users: ${e.message}")
         }
@@ -77,12 +75,12 @@ class SendToExchangeService(
 
             val time =
                 measureTime {
-                    stampServerApi.postStampCode(
-                        stampCodeMapper.toRequest(readStampCode),
-                        readStampCode.idempotencyKey,
-                    )
+//                    stampServerApi.postStampCode(
+//                        stampCodeMapper.toRequest(readStampCode),
+//                        readStampCode.idempotencyKey,
+//                    )
                 }
-            logger.info("sendToExchange step took $time")
+            logger.trace("sendToExchange step took $time")
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send stamp code to exchange: ${e.message}")
         }
@@ -93,8 +91,8 @@ class SendToExchangeService(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.trace("Sending to users ack: $readStampCode")
-            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
+            logger.trace("Sending to users ack: {}", readStampCode)
+//            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send ack to users: ${e.message}")
         }
