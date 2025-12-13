@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="1" author="mvandermade">
+        <createTable tableName="workers">
+            <column name="id" type="bigint">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="hostname" type="varchar(255)"/>
+            <column name="expire_heartbeat_at" type="TIMESTAMP WITH TIME ZONE"/>
+        </createTable>
+        <createSequence sequenceName="workers_seq"
+                        cycle="false"
+                        dataType="bigint"
+                        incrementBy="50"
+                        maxValue="9223372036854775807"
+                        startValue="1"
+        />
+    </changeSet>
+
+</databaseChangeLog>

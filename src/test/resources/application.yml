@@ -15,7 +15,7 @@ application:
     client:
       channels:
         io-balancer:
-          enabled: true
+          enabled: false
 server:
   port: 8882
 logging:

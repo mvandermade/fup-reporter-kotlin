@@ -4,23 +4,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="1" author="mvandermade">
-        <createTable tableName="workers">
-            <column name="id" type="bigint">
-                <constraints primaryKey="true"/>
-            </column>
-            <column name="hostname" type="varchar(255)"/>
-            <column name="expire_heartbeat_at" type="TIMESTAMP WITH TIME ZONE"/>
-        </createTable>
-        <createSequence sequenceName="workers_seq"
-                        cycle="false"
-                        dataType="bigint"
-                        incrementBy="50"
-                        maxValue="9223372036854775807"
-                        startValue="1"
-        />
-
-        <createTable tableName="workflows">
+    <changeSet id="4" author="mvandermade">
+        <createTable tableName="workflow_tombstones">
             <column name="id" type="bigint">
                 <constraints primaryKey="true"/>
             </column>
@@ -35,16 +20,13 @@
                 <constraints unique="true"/>
             </column>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="marked_as_tombstone_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
-        <!-- For scheduled task /-->
-        <createIndex indexName="idx_workflows_worker_id" tableName="workflows">
-            <column name="worker_id"/>
-        </createIndex>
-        <addForeignKeyConstraint baseTableName="workflows" baseColumnNames="worker_id"
-                                 constraintName="fk_workflows_workers"
+        <addForeignKeyConstraint baseTableName="workflow_tombstones" baseColumnNames="worker_id"
+                                 constraintName="fk_workflow_tombstones_workers"
                                  referencedTableName="workers"
                                  referencedColumnNames="id"/>
-        <createSequence sequenceName="workflows_seq"
+        <createSequence sequenceName="workflow_tombstones_seq"
                         cycle="false"
                         dataType="bigint"
                         incrementBy="50"
@@ -52,11 +34,11 @@
                         startValue="1"
         />
 
-        <createTable tableName="workflow_steps">
+        <createTable tableName="workflow_step_tombstones">
             <column name="id" type="bigint">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="workflow_id" type="bigint">
+            <column name="workflow_tombstone_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="input" type="clob">
@@ -73,14 +55,17 @@
             <column name="output_at" type="TIMESTAMP WITH TIME ZONE"/>
             <column name="error_message" type="clob"/>
             <column name="error_at" type="TIMESTAMP WITH TIME ZONE"/>
+
         </createTable>
-        <addForeignKeyConstraint baseTableName="workflow_steps" baseColumnNames="workflow_id"
-                                 constraintName="fk_workflow_steps_workflows"
-                                 referencedTableName="workflows"
+
+        <addForeignKeyConstraint baseTableName="workflow_step_tombstones" baseColumnNames="workflow_tombstone_id"
+                                 constraintName="fk_workflow_step_tombstones_workflow_tombstones"
+                                 referencedTableName="workflow_tombstones"
                                  referencedColumnNames="id"
                                  onDelete="CASCADE"
         />
-        <createSequence sequenceName="workflow_steps_seq"
+
+        <createSequence sequenceName="workflow_step_tombstones_seq"
                         cycle="false"
                         dataType="bigint"
                         incrementBy="50"

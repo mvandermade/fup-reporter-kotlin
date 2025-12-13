@@ -137,7 +137,7 @@ class WorkerDaemon(
                     if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
 
                     val newWorkflow =
-                        workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
+                        workflowRepository.findByWorkerIsNullOrderByIdAsc()
                             ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
                     val worker = workerRepository.getReferenceById(workerId)
 
