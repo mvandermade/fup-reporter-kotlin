@@ -18,7 +18,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
+    show-sql: true
     open-in-view: false
   liquibase:
     enabled: true
@@ -29,7 +29,7 @@ spring:
         size: 1
 application:
   workers:
-    amount: 1000
+    amount: 50
   api-callers:
     stamp-server:
       url: http://localhost:31313

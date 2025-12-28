@@ -130,31 +130,27 @@ class WorkerDaemon(
     }
 
     fun obtainWorkflow(): WorkerAssignmentResult {
-        var newWorkflowId: Long? = null
         try {
-            val result =
-                transactionProvider.newReadWrite {
-                    if (workflowId != null) return@newReadWrite WorkerAssignmentResult.WorkerAlreadyAssigned
+            val start = System.nanoTime()
+            if (workflowId != null) return WorkerAssignmentResult.WorkerAlreadyAssigned
 
-                    val newWorkflow =
-                        workflowRepository.findByWorkerIsNullOrderByIdAsc()
-                            ?: return@newReadWrite WorkerAssignmentResult.NoWorkflowFound
-                    val worker = workerRepository.getReferenceById(workerId)
+            val newWorkflow =
+                workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
 
-                    newWorkflow.worker = worker
-                    newWorkflowId = workflowRepository.save(newWorkflow).id
-
-                    WorkerAssignmentResult.Assigned
-                }
-
-            return if (result == WorkerAssignmentResult.Assigned) {
-                logger.trace("[Assigned] setting worker $workerId workflowId to: $newWorkflowId")
-                workflowId = newWorkflowId
-                WorkerAssignmentResult.Assigned
-            } else {
-                logger.trace("[NotAssigned] Lock free result: ${result.javaClass.simpleName}")
-                result
+            if (newWorkflow == null) {
+                logger.info("Null find took: ${(System.nanoTime() - start) / 1_000_000} ms")
+                return WorkerAssignmentResult.NoWorkflowFound
             }
+
+            logger.trace("Find took: ${(System.nanoTime() - start) / 1_000_000} ms")
+
+            val worker = workerRepository.getReferenceById(workerId)
+
+            newWorkflow.worker = worker
+            workflowId = workflowRepository.save(newWorkflow).id
+            logger.info("Save took: ${(System.nanoTime() - start) / 1_000_000} ms")
+
+            return WorkerAssignmentResult.Assigned
         } catch (_: ObjectOptimisticLockingFailureException) {
             logger.trace("[NotAssigned] another worker optimistically locked workerId $workerId")
             return WorkerAssignmentResult.OptimisticLockingFailure

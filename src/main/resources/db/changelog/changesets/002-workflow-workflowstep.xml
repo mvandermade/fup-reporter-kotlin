@@ -21,15 +21,7 @@
             </column>
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE"/>
         </createTable>
-        <!-- For scheduled task /-->
-        <createIndex indexName="idx_workflows_worker_id" tableName="workflows">
-            <column name="worker_id"/>
-        </createIndex>
-        <!-- Optimize finding workflow -->
-        <createIndex indexName="idx_workflow_worker_id_id" tableName="workflows">
-            <column name="worker_id"/>
-            <column name="id"/>
-        </createIndex>
+<!--    No indexes makes it faster    -->
         <addForeignKeyConstraint baseTableName="workflows" baseColumnNames="worker_id"
                                  constraintName="fk_workflows_workers"
                                  referencedTableName="workers"
