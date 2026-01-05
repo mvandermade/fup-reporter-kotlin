@@ -35,9 +35,6 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
-    implementation("org.springframework.kafka:spring-kafka")
-    implementation("org.apache.kafka:kafka-streams")
-
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     runtimeOnly("org.postgresql:postgresql")
@@ -51,9 +48,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:junit-jupiter:1.21.3")
-    testImplementation("org.testcontainers:kafka:1.21.3")
     testImplementation("org.testcontainers:postgresql:1.21.3")
     testImplementation("org.springframework.grpc:spring-grpc-test")
+    testImplementation("io.mockk:mockk:1.14.6")
+    testImplementation("com.ninja-squad:springmockk:5.0.1")
 }
 
 dependencyManagement {

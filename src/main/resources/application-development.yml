@@ -1,4 +1,7 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
   config:
     activate:
       on-profile: development
@@ -15,26 +18,25 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
+    show-sql: true
     open-in-view: false
-  kafka:
-    producer:
-      bootstrap-servers: localhost:9092
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      client-id: made-funicular-stamp-reporter-kotlin
-      retries: 3
   liquibase:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
+  task:
+    scheduling:
+      pool:
+        size: 1
 application:
+  workers:
+    amount: 50
   api-callers:
     stamp-server:
-      url: http://localhost:8881
-  kafka:
-    deadletter-producer:
-      bootstrap-servers: localhost:9092
-    consumer:
-      bootstrap-servers: localhost:9092
+      url: http://localhost:31313
+  grpc:
+    client:
+      channels:
+        io-balancer:
+          enabled: false
 server:
   port: 8882

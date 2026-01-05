@@ -16,7 +16,6 @@ class HeartBeater(
 
     @Scheduled(fixedDelay = 10_000)
     fun heartBeat() {
-        logger.info("HeartBeater started")
         trackerWebsocketHandler.sendAll(
             WebSocketHeartbeatMessage(datetime = randomProvider.randomUUID().toString()),
         )

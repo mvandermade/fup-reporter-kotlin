@@ -41,13 +41,13 @@ class TrackerWebsocketHandler : TextWebSocketHandler() {
                 webSocketClient.session.sendMessage(TextMessage(text))
             }
         } catch (e: Exception) {
-            // you can catch more specific exception here and handle it in a different ways, e.g.: when the session is closed unexpectedly
+            // you can catch a more specific exception here and handle it in different ways, e.g.: when the session is closed unexpectedly
             webSockerClientList.remove(webSocketClient)
         }
     }
 
     fun sendAll(message: WebSocketClientMessage) {
-        logger.info("Sending event: $message to ${webSockerClientList.size} clients")
+        logger.trace("Sending event: {} to {} clients", message, webSockerClientList.size)
         webSockerClientList.forEach {
             sendEvent(it, message)
         }

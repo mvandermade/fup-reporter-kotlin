@@ -21,3 +21,6 @@ Example (jump into the container): `docker exec -it kafka_container bash`
 
 ### Dead letter topic
 ./kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic serial-stamp-dlt --property print.headers=true
+
+## Tricks
+```docker compose down --volumes```
