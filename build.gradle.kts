@@ -26,10 +26,11 @@ repositories {
 
 // Openfeign
 extra["springCloudVersion"] = "2025.1.0"
-extra["springGrpcVersion"] = "0.9.0"
+extra["springGrpcVersion"] = "1.0.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-liquibase")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
@@ -38,7 +39,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     runtimeOnly("org.postgresql:postgresql")
-    implementation("org.liquibase:liquibase-core")
 
     implementation("io.grpc:grpc-services")
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")
