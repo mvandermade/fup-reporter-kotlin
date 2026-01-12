@@ -1,11 +1,11 @@
 import com.google.protobuf.gradle.id
 
 plugins {
-    kotlin("jvm") version "2.2.0"
-    kotlin("plugin.spring") version "2.2.0"
-    id("org.springframework.boot") version "3.5.3"
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.spring") version "2.2.21"
+    id("org.springframework.boot") version "4.0.1"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.2.0"
+    kotlin("plugin.jpa") version "2.2.21"
     id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
     id("com.github.ben-manes.versions") version "0.52.0"
     id("com.google.protobuf") version "0.9.4"
@@ -16,7 +16,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(24)
     }
 }
 
@@ -25,11 +25,12 @@ repositories {
 }
 
 // Openfeign
-extra["springCloudVersion"] = "2025.0.0"
-extra["springGrpcVersion"] = "0.9.0"
+extra["springCloudVersion"] = "2025.1.0"
+extra["springGrpcVersion"] = "1.0.0"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-liquibase")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
@@ -38,7 +39,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     runtimeOnly("org.postgresql:postgresql")
-    implementation("org.liquibase:liquibase-core")
 
     implementation("io.grpc:grpc-services")
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")
