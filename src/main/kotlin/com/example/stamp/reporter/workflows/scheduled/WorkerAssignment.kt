@@ -37,7 +37,7 @@ class WorkerAssignment(
         }
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 10)
     fun cleanupAnyExpiredHeartBeat() {
         workerManagement.cleanupAnyExpiredHeartBeat()
     }

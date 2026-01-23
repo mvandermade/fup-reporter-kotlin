@@ -39,6 +39,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
     runtimeOnly("org.postgresql:postgresql")
+    implementation("org.springframework.integration:spring-integration-mqtt")
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.1")
 
     implementation("io.grpc:grpc-services")
     implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")

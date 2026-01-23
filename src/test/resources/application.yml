@@ -11,6 +11,13 @@ spring:
     enabled: true
     change-log: /db/changelog/db.changelog-master.xml
 application:
+  mqtt:
+    broker-url: tcp://localhost:1883
+    client-id: stamp-reporter-test
+    username: username
+    password: password
+    inbound-topic: topic1
+    outbound-topic: topic1
   api-callers:
     stamp-server:
       url: http://

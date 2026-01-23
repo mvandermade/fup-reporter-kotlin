@@ -18,7 +18,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     open-in-view: false
   liquibase:
     enabled: true
@@ -28,6 +28,13 @@ spring:
       pool:
         size: 1
 application:
+  mqtt:
+    broker-url: tcp://localhost:1883
+    client-id: stamp-reporter-client
+    username: username
+    password: password
+    inbound-topic: topic1
+    outbound-topic: topic1
   workers:
     amount: 50
   api-callers:
