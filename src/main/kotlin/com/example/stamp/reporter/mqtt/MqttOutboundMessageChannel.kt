@@ -20,12 +20,6 @@ class MqttOutboundMessageChannel {
     @Value("\${application.mqtt.client-id}")
     private lateinit var clientId: String
 
-    @Value("\${application.mqtt.username}")
-    private lateinit var username: String
-
-    @Value("\${application.mqtt.password}")
-    private lateinit var password: String
-
     @Value("\${application.mqtt.outbound-topic}")
     private lateinit var outboundTopic: String
 
@@ -34,8 +28,6 @@ class MqttOutboundMessageChannel {
         val factory = DefaultMqttPahoClientFactory()
         val options = MqttConnectOptions()
         options.setServerURIs(arrayOf(brokerUrl))
-        options.setUserName(username)
-        options.setPassword(password.toCharArray())
         factory.setConnectionOptions(options)
         return factory
     }

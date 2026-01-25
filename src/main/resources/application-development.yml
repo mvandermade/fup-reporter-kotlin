@@ -31,8 +31,6 @@ application:
   mqtt:
     broker-url: tcp://localhost:1883
     client-id: stamp-reporter-client
-    username: username
-    password: password
     inbound-topic: topic1
     outbound-topic: topic1
   workers:

@@ -1,5 +1,6 @@
 package com.example.stamp.reporter.mqtt
 
+import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -8,11 +9,14 @@ import org.springframework.integration.channel.DirectChannel
 import org.springframework.integration.core.MessageProducer
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter
+import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.MessageHandler
 
 @Configuration
-class MqttInboundMessageChannel {
+class MqttInboundMessageChannel(
+    private val trackerWebsocketHandler: TrackerWebsocketHandler,
+) {
     @Value("\${application.mqtt.broker-url}")
     private lateinit var brokerUrl: String
 
@@ -42,5 +46,14 @@ class MqttInboundMessageChannel {
 
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
-    fun handler(): MessageHandler = MessageHandler { message -> println("Received MQTT message: ${message.payload}") }
+    fun handler(): MessageHandler =
+        MessageHandler { message ->
+            sendMessage(message)
+        }
+
+    private fun sendMessage(message: Message<*>) {
+        trackerWebsocketHandler.sendAll(
+            message.payload.toString(),
+        )
+    }
 }
