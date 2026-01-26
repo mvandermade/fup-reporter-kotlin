@@ -20,9 +20,9 @@ class MockReaderSerial(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    @Scheduled(fixedDelay = 1)
+    @Scheduled(fixedDelay = 2)
     fun scanPostZegel() {
-        val input = randomProvider.randomString(1)
+        val input = randomProvider.randomString(5)
         val zdt = timeProvider.zonedDateTimeNowSystem()
         logger.trace("Mock Serial Event: {} @ {}", input, zdt)
         sendToExchangeBroker.save(

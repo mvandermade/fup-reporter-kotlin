@@ -11,6 +11,18 @@ services:
       - "5432:5432"
     volumes:
       - pgdata_reporter:/var/lib/postgresql/data
+  mosquitto_reporter_service:
+    image: eclipse-mosquitto:2.0.22
+    ports:
+      - "1883:1883"
+      - "9001:9001" #default mqtt port for websockets
+    volumes:
+      - ./data_mosquitto_reporter:/mosquitto/data:rw
+      - ./log_mosquitto_reporter:/mosquitto/log:rw
 volumes:
   pgdata_reporter:
+    driver: local
+  data_mosquitto_reporter:
+    driver: local
+  log_mosquitto_reporter:
     driver: local

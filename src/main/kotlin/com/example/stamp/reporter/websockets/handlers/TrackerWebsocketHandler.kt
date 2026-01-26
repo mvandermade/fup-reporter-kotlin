@@ -46,7 +46,29 @@ class TrackerWebsocketHandler : TextWebSocketHandler() {
         }
     }
 
+    private fun sendEvent(
+        webSocketClient: WebSocketClient,
+        message: String,
+    ) {
+        try {
+            // Ensure thread-safe, serialized, and blocking sends per session
+            synchronized(webSocketClient.session) {
+                webSocketClient.session.sendMessage(TextMessage(message))
+            }
+        } catch (e: Exception) {
+            // you can catch a more specific exception here and handle it in different ways, e.g.: when the session is closed unexpectedly
+            webSockerClientList.remove(webSocketClient)
+        }
+    }
+
     fun sendAll(message: WebSocketClientMessage) {
+        logger.trace("Sending event: {} to {} clients", message, webSockerClientList.size)
+        webSockerClientList.forEach {
+            sendEvent(it, message)
+        }
+    }
+
+    fun sendAll(message: String) {
         logger.trace("Sending event: {} to {} clients", message, webSockerClientList.size)
         webSockerClientList.forEach {
             sendEvent(it, message)

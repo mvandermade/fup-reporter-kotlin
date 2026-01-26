@@ -3,9 +3,9 @@ package com.example.stamp.reporter.grpc
 import balancerapi.BalancerSvcGrpc
 import balancerapi.WorkAcknowledgement
 import com.example.stamp.reporter.domain.messages.ReadStampCode
+import com.example.stamp.reporter.mqtt.MQTTMessagingService
 import com.example.stamp.reporter.providers.TimeProvider
 import com.example.stamp.reporter.websockets.domain.WebSocketSerialEventMessage
-import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -22,8 +22,8 @@ class IOBalancerReader(
     private val ioBalancerStub: BalancerSvcGrpc.BalancerSvcBlockingV2Stub,
     private val timeProvider: TimeProvider,
     private val sendToExchangeBroker: SendToExchangeBroker,
-    private val trackerWebsocketHandler: TrackerWebsocketHandler,
     @param:Value("\${application.grpc.client.channels.io-balancer.enabled}") private val enabled: Boolean,
+    private val mqttMessagingService: MQTTMessagingService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -58,7 +58,7 @@ class IOBalancerReader(
             // Post it
 
             logger.trace("Read Serial Event from gRPC: ${assignment.postzegelCode}")
-            trackerWebsocketHandler.sendAll(WebSocketSerialEventMessage(code = assignment.postzegelCode))
+            mqttMessagingService.sendToMqtt(WebSocketSerialEventMessage(code = assignment.postzegelCode))
 
             val ack =
                 WorkAcknowledgement

@@ -138,7 +138,7 @@ class WorkerDaemon(
                 workflowRepository.findFirstByWorkerIsNullOrderByIdAsc()
 
             if (newWorkflow == null) {
-                logger.info("Null find took: ${(System.nanoTime() - start) / 1_000_000} ms")
+                logger.trace("Null find took: ${(System.nanoTime() - start) / 1_000_000} ms")
                 return WorkerAssignmentResult.NoWorkflowFound
             }
 
@@ -148,7 +148,6 @@ class WorkerDaemon(
 
             newWorkflow.worker = worker
             workflowId = workflowRepository.save(newWorkflow).id
-            logger.info("Save took: ${(System.nanoTime() - start) / 1_000_000} ms")
 
             return WorkerAssignmentResult.Assigned
         } catch (_: ObjectOptimisticLockingFailureException) {
@@ -191,7 +190,7 @@ class WorkerDaemon(
     }
 
     // Prevent thread racing and use a lock around this function
-    fun anyWorkflow() {
+    private fun anyWorkflow() {
         val localWorkflowId = workflowId ?: return
         val workflow = workflowRepository.findByIdOrNull(localWorkflowId)
         if (workflow == null) {

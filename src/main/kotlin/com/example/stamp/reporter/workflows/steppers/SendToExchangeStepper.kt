@@ -2,9 +2,9 @@ package com.example.stamp.reporter.workflows.steppers
 
 import com.example.stamp.reporter.apicallers.feign.StampServerApi
 import com.example.stamp.reporter.domain.messages.ReadStampCode
+import com.example.stamp.reporter.mqtt.MQTTMessagingService
 import com.example.stamp.reporter.websockets.domain.WebSocketAckExchangeMessage
 import com.example.stamp.reporter.websockets.domain.WebSocketPostExchangeMessage
-import com.example.stamp.reporter.websockets.handlers.TrackerWebsocketHandler
 import com.example.stamp.reporter.workflows.domain.WorkflowResult
 import com.example.stamp.reporter.workflows.mappers.StampCodeMapper
 import com.example.stamp.reporter.workflows.processors.WorkflowStepRegistry
@@ -20,8 +20,8 @@ import kotlin.time.measureTime
 class SendToExchangeStepper(
     private val stampServerApi: StampServerApi,
     private val stampCodeMapper: StampCodeMapper,
-    private val trackerWebsocketHandler: TrackerWebsocketHandler,
     private val workflowStepRegistry: WorkflowStepRegistry,
+    private val mqttMessagingService: MQTTMessagingService,
 ) {
     private val objectMapper =
         with(jacksonObjectMapper()) {
@@ -62,7 +62,7 @@ class SendToExchangeStepper(
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
             logger.trace("Sending to users read input: {}", readStampCode)
-            trackerWebsocketHandler.sendAll(WebSocketPostExchangeMessage(readStampCode.code))
+            mqttMessagingService.sendToMqtt((WebSocketPostExchangeMessage(readStampCode.code)))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send read input to users: ${e.message}")
         }
@@ -73,7 +73,7 @@ class SendToExchangeStepper(
         try {
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
-            logger.trace("Received input to send to exchange: {}", readStampCode)
+            logger.trace("MAKE SURE THE OUTPUTS ARE SPLIT INTO SEPARATE TOPICS!! Received input to send to exchange: {}", readStampCode)
 
             val time =
                 measureTime {
@@ -94,7 +94,7 @@ class SendToExchangeStepper(
             val readStampCode =
                 rawInput?.let { objectMapper.readValue<ReadStampCode>(rawInput) } ?: return WorkflowResult.Error("No code inputted")
             logger.trace("Sending to users ack: {}", readStampCode)
-            trackerWebsocketHandler.sendAll(WebSocketAckExchangeMessage(readStampCode.code))
+            mqttMessagingService.sendToMqtt((WebSocketAckExchangeMessage(readStampCode.code)))
         } catch (e: Exception) {
             return WorkflowResult.Error("Failed to send ack to users: ${e.message}")
         }

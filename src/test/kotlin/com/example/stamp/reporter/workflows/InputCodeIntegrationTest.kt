@@ -3,24 +3,33 @@ package com.example.stamp.reporter.workflows
 import com.example.stamp.reporter.apicallers.feign.StampServerApi
 import com.example.stamp.reporter.domain.messages.ReadStampCode
 import com.example.stamp.reporter.domain.requests.StampCodeRequest
+import com.example.stamp.reporter.mqtt.MQTTMessagingService
 import com.example.stamp.reporter.providers.RandomProvider
 import com.example.stamp.reporter.providers.TimeProvider
+import com.example.stamp.reporter.testutils.addMqttToRegistry
+import com.example.stamp.reporter.testutils.startMqttContainer
 import com.example.stamp.reporter.testutils.startPostgresContainer
 import com.example.stamp.reporter.workflows.brokers.SendToExchangeBroker
 import com.example.stamp.reporter.workflows.repositories.WorkflowErrorRepository
 import com.example.stamp.reporter.workflows.repositories.WorkflowTombstoneRepository
 import com.example.stamp.reporter.workflows.workers.WorkerStarter
 import com.ninjasquad.springmockk.MockkBean
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.Awaitility.await
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection
+import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.junit.jupiter.Container
 import java.time.Duration
 
@@ -38,8 +47,13 @@ class InputCodeIntegrationTest(
     @MockkBean
     private lateinit var stampServerApi: StampServerApi
 
+    @MockkBean
+    private lateinit var mqttMessagingService: MQTTMessagingService
+
     @BeforeEach
     fun setUp() {
+        every { mqttMessagingService.sendToMqtt(any()) } just Runs
+
         workflowTombstoneRepository.deleteAll()
         workflowErrorRepository.deleteAll()
     }
@@ -122,5 +136,23 @@ class InputCodeIntegrationTest(
         @ServiceConnection
         @Suppress("unused")
         val postgresContainer = startPostgresContainer()
+
+        @Container
+        private val mqttContainer = startMqttContainer()
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun properties(registry: DynamicPropertyRegistry) {
+            addMqttToRegistry(registry, mqttContainer)
+        }
+
+        // For closing down the application more quickly
+        @JvmStatic
+        @AfterAll
+        fun tearDown(
+            @Autowired mqttChannelAdapter: MqttPahoMessageDrivenChannelAdapter,
+        ) {
+            if (mqttChannelAdapter.isRunning) mqttChannelAdapter.stop()
+        }
     }
 }

@@ -5,7 +5,7 @@ import java.util.UUID
 
 @Component
 class RandomProvider {
-    private val charPool: List<Char> = ('A'..'B') + ('0'..'1')
+    private val charPool: List<Char> = ('A'..'Z') + ('0'..'9')
 
     fun randomString(length: Int): String {
         val randomString =

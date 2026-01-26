@@ -24,3 +24,9 @@ Example (jump into the container): `docker exec -it kafka_container bash`
 
 ## Tricks
 ```docker compose down --volumes```
+
+# Mosquito
+In order for mosquito to work change the following lines in the container using
+`vi /mosquitto/config/mosquitto.conf`
+(line 533) Search using / for allow_anonymous and change to allow_anonymous true
+(line 234) Search using / for listener and change to listener 1883
